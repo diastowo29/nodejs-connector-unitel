@@ -1,0 +1,28 @@
+extends layout
+
+
+block content
+  h1 Unitel Chat Integration
+  p Welcome to Unitel Chat Integration
+  .main.container
+    .row
+      .col-md-6.col-md-offset-3
+        form(method='POST' action='/unitel/add')
+          div.form-group.col-md-12
+            label(for='name') Integration Name:
+            input#name.form-control(type='text', placeholder='BotSample' value='JendekBot' name='bot_name')
+          div.form-group.col-md-12
+            label(for='email') Integration Token:
+            input#email.form-control(type='text', placeholder='1046550748:AAEMPf0rel_Gj1ysgw7tzxKchypnB5Hzo9I' value='1046550748:AAEMPf0rel_Gj1ysgw7tzxKchypnB5Hzo9I' name='bot_token')
+          div.form-group.col-md-12
+            label(for='email') Zendesk Token:
+            input#name.form-control(type='text', value=zendesk_access_token, name='zendesk_access_token' disabled='true')
+          div.form-group.col-md-12
+            label(for='email') Zendesk Instance Push ID:
+            input#name.form-control(type='text', value=instance_push_id, name='instance_push_id' disabled='true')
+            input#name.form-control(type='text', value=subdomain, name='subdomain', hidden)
+            input#name.form-control(type='text', value=locale, name='locale', hidden)
+            input#name.form-control(type='text', value=return_url, name='return_url', hidden)
+          
+          button.btn.btn-primary(type='submit') Create Integration 
+
