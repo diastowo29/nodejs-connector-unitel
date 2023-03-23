@@ -13,8 +13,8 @@ router.get('/manifest', function(req, res, next) {
       channelback_files: true,
       create_followup_tickets: false,
       urls: {
-        admin_ui: "https://" + host + "/cif/admin",
-        channelback_url: "https://" + host + "/cif/channelback"
+        admin_ui: "https://" + host + "/api/v1/cif/admin",
+        channelback_url: "https://" + host + "/api/v1/cif/channelback"
       }
     })
 });
@@ -46,6 +46,27 @@ router.post('/admin', function(req, res, next) {
     locale: locale,
     subdomain: subdomain
   });
+})
+
+router.post('/add', function(req, res, next) {
+	let metadata = {};
+    metadata['instance_push_id'] = req.body.instance_push_id;
+    metadata['zendesk_access_token'] = req.body.zendesk_access_token;
+    metadata['subdomain'] = req.body.subdomain;
+    metadata['locale'] = req.body.locale;
+    metadata['return_url'] = req.body.return_url;
+    metadata['bot_token'] = req.body.bot_token;
+    metadata['bot_name'] = req.body.bot_name;
+
+    let name = "Unitel Live Chat : " + req.body.bot_name
+
+    res.render('confirm', {
+        title: 'CIF Confirmation Page',
+        return_url: req.body.return_url,
+        metadata: JSON.stringify(metadata),
+        state: JSON.stringify({}),
+        name: name
+    });
 })
 
 router.post('/pull', function(req, res, next) {
@@ -88,6 +109,7 @@ router.post('/push', function(req, res, next) {
 	let author_external_id = 'unitel-author-' + req.body.message.from.id;
   let msg_type = req.body.message.type;
   let msg_content = req.body.message.content;
+  let instance_push_id = req.body.instance_id;
 
   msgObj = {
     external_id: ticket_external_id,
