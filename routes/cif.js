@@ -1,5 +1,8 @@
 var express = require('express');
 var router = express.Router();
+const service = require('../payload/service')
+
+const ZD_PUSH_API = process.env.ZD_PUSH_API || 'https://pdi-rokitvhelp.zendesk.com/api/v2/any_channel/push'; //ENV VARIABLE
 
 /* GET home page. */
 router.get('/manifest', function(req, res, next) {
@@ -70,7 +73,7 @@ router.post('/add', function(req, res, next) {
 })
 
 router.post('/pull', function(req, res, next) {
-	res.status(200).send({});
+	res.status(200).send();
 })
 
 router.post('/channelback', function(req, res, next) {
@@ -101,6 +104,9 @@ router.get('/clickthrough', function(req, res, next) {
 })
 
 router.post('/push', function(req, res, next) {
+  if (!req.headers.authorization) {
+    return res.status(403).json({ error: 'No credentials sent!' });
+  }
   let external_resource_array = [];
 	var msgObj = {}
   let username = req.body.message.from.username || req.body.message.from.first_name;
@@ -110,6 +116,7 @@ router.post('/push', function(req, res, next) {
   let msg_type = req.body.message.type;
   let msg_content = req.body.message.content;
   let instance_push_id = req.body.instance_id;
+  let authToken = req.headers['authorization']
 
   msgObj = {
     external_id: ticket_external_id,
@@ -128,9 +135,8 @@ router.post('/push', function(req, res, next) {
   }
 	external_resource_array.push(msgObj);
   msgObj = {};
-  res.status(200).send({
-    external_resources: external_resource_array
-  })
+  res.status(401).send({error: 'Unauthorize'})
+  // res.status(200).send(service.pushConversationPayload(ZD_PUSH_API, authToken, instance_push_id, external_resource_array))
 })
 
 module.exports = router;
