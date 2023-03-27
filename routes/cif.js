@@ -1,6 +1,10 @@
 var express = require('express');
 var router = express.Router();
 const service = require('../payload/service')
+const axios = require('axios');
+const fs = require("fs");
+var request = require('request');
+var fetch = require('node-fetch');
 
 const ZD_PUSH_API = process.env.ZD_PUSH_API || 'https://pdi-rokitvhelp.zendesk.com/api/v2/any_channel/push'; //ENV VARIABLE
 
@@ -103,24 +107,76 @@ router.get('/clickthrough', function(req, res, next) {
 	res.status(200).send({});	
 })
 
+router.post('/file.jpeg', async function(req, res, next) {
+  let sampleFile = 'https://static.remove.bg/sample-gallery/graphics/bird-thumbnail.jpg';
+  // const { data } = await axios.get(sampleFile, { 
+  //   responseType: "stream",
+  //   headers: {
+  //     'Content-type': 'application/octet-stream'
+  //   }
+  // });
+  // res.setHeader('content-disposition', 'attachment; filename=\"logo.jpg\"')
+  // // res.setHeader('Content-Type', 'image/jpeg')
+  // data.pipe(res);
+
+  // fetch(sampleFile).then((response) => {
+  //     res.set({
+  //       'Content-Length': response.headers.get('content-length'),
+  //       'Content-Disposition': `inline;filename="file.jpg"`,        
+  //       'Content-Type': response.headers.get('content-type'),        
+  //     })
+  //     response.body.pipe(res);
+  //     response.body.on('error', () => {}) // To handle failure
+  //   });
+
+  request.get(sampleFile).on('response', function(response) {
+    response.pause();
+    if (response.statusCode == 200) {
+      response.pipe(res)
+    }
+  })
+  
+  // var https = require('https');
+  // https.get(sampleFile, remote_response => remote_response.pipe(res));
+})
+
+router.get('/file', async function(req, res, next) {
+  let sampleFile = 'https://static.remove.bg/sample-gallery/graphics/bird-thumbnail.jpg';
+  const { data } = await axios.get(sampleFile, { 
+    responseType: "stream",
+    headers: {
+      'Content-type': 'application/octet-stream'
+    }
+  });
+  // data.pipe(fs.createWriteStream("sample.jpg"));
+  res.setHeader('content-disposition', 'attachment; filename=\"logo.jpg\"')
+  // res.setHeader('Content-Type', 'image/jpeg')
+  data.pipe(res);
+  // res.download(data)
+
+  // var https = require('https');
+  // https.get(sampleFile, remote_response => remote_response.pipe(res));
+})
+
 router.post('/push', function(req, res, next) {
+  let host = req.hostname
   if (!req.headers.authorization) {
     return res.status(403).json({ error: 'No credentials sent!' });
   }
   let external_resource_array = [];
 	var msgObj = {}
-  let username = req.body.message.from.username || req.body.message.from.first_name;
-	let ticket_external_id = 'unitel-ticket-' + req.body.message.from.id + '-' + req.body.message.message.id;
-	let ticket_thread_id = 'unitel-thread-' + req.body.message.from.id;
-	let author_external_id = 'unitel-author-' + req.body.message.from.id;
-  let msg_type = req.body.message.type;
-  let msg_content = req.body.message.content;
+  let msg = req.body.message
+  let username = msg.from.username || msg.from.first_name;
+	let ticket_external_id = `unitel-ticket-${msg.from.id}-${msg.id}-${Date.now()}`;
+	let ticket_thread_id = `unitel-thread-${msg.from.id}`;
+	let author_external_id = `unitel-author-${msg.from.id}`;
+  let msg_type = msg.type;
+  let msg_content = msg.content;
   let instance_push_id = req.body.instance_id;
   let authToken = req.headers['authorization']
 
   msgObj = {
     external_id: ticket_external_id,
-    message: msg_content,
     thread_id: ticket_thread_id,
     created_at: new Date().toISOString(),
     author: {
@@ -133,10 +189,27 @@ router.post('/push', function(req, res, next) {
     }],
     allow_channelback: true
   }
+
+  if (msg_type == 'text') {
+    msgObj['message'] = msg_content;
+  } else {
+    msgObj['message'] = `${msg_type} from User`;
+    msgObj['file_urls'] = [`/api/v1/cif/file.jpeg`]
+  }
+
 	external_resource_array.push(msgObj);
   msgObj = {};
-  res.status(401).send({error: 'Unauthorize'})
+  axios(service.pushConversationPayload(ZD_PUSH_API, authToken, instance_push_id, external_resource_array))
+  .then((response) => {
+    res.status(200).send({result: response.data})
+  }, (error) => {
+    console.log(error)
+    res.status(200).send({error: error})
+  })
+  // res.status(401).send({error: 'Unauthorize'})
   // res.status(200).send(service.pushConversationPayload(ZD_PUSH_API, authToken, instance_push_id, external_resource_array))
 })
+
+
 
 module.exports = router;
