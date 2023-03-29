@@ -15,6 +15,22 @@ const pushConversationPayload = function (pushApi, cifToken, pushId, extResource
     return cifPayload;
 }
 
+const pushBackPayload = function (replyBackApi, chatToken, messagePayload) {
+    const replybackPayload = {
+        method: 'POST',
+        url: replyBackApi,
+        headers: {
+            'Authorization': 'Bearer ' + chatToken
+        },
+        data: {
+            message: messagePayload
+        }
+    }
+
+    return replybackPayload;
+}
+
 module.exports = {
-    pushConversationPayload
+    pushConversationPayload,
+    pushBackPayload
 }
