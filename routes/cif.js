@@ -191,7 +191,7 @@ router.post('/push', function(req, res, next) {
     return res.status(403).json({ error: 'No credentials sent!' });
   }
 
-  if (!msg.from.id || !req.body.brand_id || !msg.from.username || !msg.id) {
+  if (!req.body.message.from.id || !req.body.brand_id || !req.body.message.from.username || !req.body.message.id) {
     goLogging('error', 'PUSH', req.body.message.from.id, '422', req.body.message.from.username)
     return res.status(422).json({ error: 'Data not valid' });
   }
@@ -237,14 +237,15 @@ router.post('/push', function(req, res, next) {
 
 	external_resource_array.push(msgObj);
   msgObj = {};
-  axios(service.pushConversationPayload(ZD_PUSH_API, authToken, instance_push_id, external_resource_array))
-  .then((response) => {
-    res.status(200).send(response.data)
-  }, (error) => {
-    console.log(error)
-    goLogging('error', 'PUSH', req.body.message.from.id, error, req.body.message.from.username);
-    res.status(200).send({error: error})
-  })
+  console.log(service.pushConversationPayload(ZD_PUSH_API, authToken, instance_push_id, external_resource_array))
+  // axios(service.pushConversationPayload(ZD_PUSH_API, authToken, instance_push_id, external_resource_array))
+  // .then((response) => {
+  //   res.status(200).send(response.data)
+  // }, (error) => {
+  //   console.log(error)
+  //   goLogging('error', 'PUSH', req.body.message.from.id, error, req.body.message.from.username);
+  //   res.status(200).send({error: error})
+  // })
 })
 
 function getFileType (zdFile) {
