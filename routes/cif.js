@@ -238,14 +238,14 @@ router.post('/push', function(req, res, next) {
 	external_resource_array.push(msgObj);
   msgObj = {};
   console.log(service.pushConversationPayload(ZD_PUSH_API, authToken, instance_push_id, external_resource_array))
-  // axios(service.pushConversationPayload(ZD_PUSH_API, authToken, instance_push_id, external_resource_array))
-  // .then((response) => {
-  //   res.status(200).send(response.data)
-  // }, (error) => {
-  //   console.log(error)
-  //   goLogging('error', 'PUSH', req.body.message.from.id, error, req.body.message.from.username);
-  //   res.status(200).send({error: error})
-  // })
+  axios(service.pushConversationPayload(ZD_PUSH_API, authToken, instance_push_id, external_resource_array))
+  .then((response) => {
+    res.status(200).send(response.data)
+  }, (error) => {
+    console.log(error)
+    goLogging('error', 'PUSH', req.body.message.from.id, error, req.body.message.from.username);
+    res.status(200).send({error: error})
+  })
 })
 
 function getFileType (zdFile) {
