@@ -90,7 +90,6 @@ router.post('/add', function(req, res, next) {
     metadata['subdomain'] = req.body.subdomain;
     metadata['locale'] = req.body.locale;
     metadata['return_url'] = req.body.return_url;
-    metadata['bot_token'] = req.body.bot_token;
     metadata['bot_name'] = req.body.bot_name;
 
     let name = "Unitel Live Chat : " + req.body.bot_name

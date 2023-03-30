@@ -10,10 +10,7 @@ block content
         form(method='POST' action='/api/v1/cif/add')
           div.form-group.col-md-12
             label(for='name') Integration Name:
-            input#name.form-control(type='text', placeholder='BotSample' value='Unitel Live Chat' name='bot_name')
-          div.form-group.col-md-12
-            label(for='email') Integration Token:
-            input#email.form-control(type='text', placeholder='1046550748:AAEMPf0rel_Gj1ysgw7tzxKchypnB5Hzo9I' value='1046550748:AAEMPf0rel_Gj1ysgw7tzxKchypnB5Hzo9I' name='bot_token')
+            input#name.form-control(type='text', placeholder='Sample Account' value='' name='bot_name')
           div.form-group.col-md-12
             label(for='email') Zendesk Token:
             input#name.form-control(type='text', value=zendesk_access_token, name='zendesk_access_token' disabled='true')
