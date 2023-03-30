@@ -9,7 +9,7 @@ var request = require('request');
 
 const ZD_PUSH_API = process.env.ZD_PUSH_API || 'https://pdi-rokitvhelp.zendesk.com/api/v2/any_channel/push'; //ENV VARIABLE
 const EXT_CHAT_HOST = process.env.EXT_CHAT_HOST || 'xxx';
-const EXT_CHAT_ENDPOINT = `${EXT_CHAT_HOST}/webhooks/facebook/test/direct`;
+const EXT_CHAT_ENDPOINT = `${EXT_CHAT_HOST}webhooks/facebook/test/direct`;
 const EXT_CHAT_TOKEN = process.env.EXT_CHAT_TOKEN || 'xxx';
 const LOGGLY_TOKEN = process.env.LOGGLY_TOKEN || '25cbd41e-e0a1-4289-babf-762a2e6967b6';
 var mime = require('mime-types')
@@ -18,7 +18,7 @@ var { Loggly } = require('winston-loggly-bulk');
 let clientName = 'UNITEL'
 
 winston.add(new Loggly({
-  token: "25cbd41e-e0a1-4289-babf-762a2e6967b6",
+  token: LOGGLY_TOKEN,
   subdomain: "diastowo",
   tags: ["cif"],
   json: true
@@ -109,17 +109,17 @@ router.post('/pull', function(req, res, next) {
 })
 
 router.post('/channelback', function(req, res, next) {
-  // console.log(req.body)
 	let recipient = Buffer.from(req.body.recipient_id, 'base64').toString('ascii')
   let username = recipient.split('-')[1];
   let userid = recipient.split('-')[2];
   let brandid = req.body.thread_id.split('-')[3];
   let msgid = `unitel-ticket-${userid}-channelback-${Date.now()}`;
+  var cb_arr = [];
   if (req.body.message) {
-    var axPayload = service.pushBackPayload(
+    var textPayload = service.pushBackPayload(
       EXT_CHAT_ENDPOINT, EXT_CHAT_TOKEN, 
       unitel.replyPayload(msgid, 'text', req.body.message, brandid, username, userid))
-    console.log(JSON.stringify(axPayload))
+    cb_arr.push(textPayload)
   }
   if (req.body['file_urls[]']) {
     if (!Array.isArray(req.body['file_urls[]'])) {
@@ -127,24 +127,40 @@ router.post('/channelback', function(req, res, next) {
     }
     req.body['file_urls[]'].forEach(zdFile => {
       var fileType = getFileType(zdFile);
-      var axPayload = service.pushBackPayload(
+      var filePayload = service.pushBackPayload(
         EXT_CHAT_ENDPOINT, EXT_CHAT_TOKEN, 
         unitel.replyPayload(msgid, fileType, zdFile, brandid, username, userid))
-      console.log(JSON.stringify(axPayload))
+      cb_arr.push(filePayload)
     });
   }
-  // axios(axPayload).then((response) => {
-  //   if (response.status == 200) {
-  goLogging('info', 'CHANNELBACK', userid, req.body, username);
-      res.status(200).send({
-        external_id: msgid
-      });	
-  //   }
-  // }, (error) => {
-	// 	console.log('error')
-	// 	console.log(error.response.status)
-	// 	res.status(error.response.status).send({});
-	// })
+
+  cb_arr.forEach((cb, i) => {
+    // console.log(cb)
+    axios(cb).then((response) => {
+      if (response.status == 200) {
+        console.log(response.data)
+        if (response.data.status == 'failed') {
+          if (response.data.response == 'Unauthorized') {
+            goLogging('error', 'CHANNELBACK-401', userid, req.body, username);
+            res.status(401).send(response.data);
+          }
+        }
+        goLogging('info', 'CHANNELBACK', userid, req.body, username);
+        if (i == 0) {
+          res.status(200).send({
+            external_id: msgid
+          });	
+        }
+      }
+    }, (error) => {
+    	console.log('error')
+    	console.log(error.response.status)
+      goLogging('error', 'CHANNELBACK', userid, error.response, username);
+      if (i == 0) {
+        res.status(error.response.status).send({});
+      }
+    })
+  });
 })
 
 router.get('/clickthrough', function(req, res, next) {
@@ -170,12 +186,16 @@ router.get('/file/:string64/:filename\.:ext?', async function(req, res, next) {
 
 router.post('/push', function(req, res, next) {
   // let sampleFile = 'https://static.remove.bg/sample-gallery/graphics/bird-thumbnail.jpg';
-  let host = req.hostname
+  goLogging('info', 'PUSH', req.body.message.from.id, req.body, req.body.message.from.username);
   if (!req.headers.authorization) {
     goLogging('error', 'PUSH', req.body.message.from.id, 'NO_TOKEN', req.body.message.from.username)
     return res.status(403).json({ error: 'No credentials sent!' });
   }
-  goLogging('info', 'PUSH', req.body.message.from.id, req.body, req.body.message.from.username);
+
+  if (!msg.from.id || !req.body.brand_id || !msg.from.username || !msg.id) {
+    goLogging('error', 'PUSH', req.body.message.from.id, '422', req.body.message.from.username)
+    return res.status(422).json({ error: 'Data not valid' });
+  }
   let external_resource_array = [];
 	var msgObj = {};
   let msg = req.body.message;
