@@ -2,16 +2,19 @@ var express = require('express');
 var router = express.Router();
 const service = require('../payload/service')
 const unitel = require('../payload/unitel')
+const cifhelper = require('../payload/cifhelper')
 const axios = require('axios');
 const axiosRetry = require('axios-retry');
 const fs = require("fs");
 var request = require('request');
+const { body, header, validationResult } = require('express-validator');
 
 const ZD_PUSH_API = process.env.ZD_PUSH_API || 'https://pdi-rokitvhelp.zendesk.com/api/v2/any_channel/push'; //ENV VARIABLE
 const EXT_CHAT_HOST = process.env.EXT_CHAT_HOST || 'xxx';
 const EXT_CHAT_ENDPOINT = `${EXT_CHAT_HOST}webhooks/facebook/test/direct`;
 const EXT_CHAT_TOKEN = process.env.EXT_CHAT_TOKEN || 'xxx';
 const LOGGLY_TOKEN = process.env.LOGGLY_TOKEN || '25cbd41e-e0a1-4289-babf-762a2e6967b6';
+const USER_TICKET_ID = process.env.USER_TICKET_ID || '6681549599887';
 var mime = require('mime-types')
 var winston = require('winston');
 var { Loggly } = require('winston-loggly-bulk');
@@ -125,7 +128,7 @@ router.post('/channelback', function(req, res, next) {
       req.body['file_urls[]'] = [req.body['file_urls[]']]
     }
     req.body['file_urls[]'].forEach(zdFile => {
-      var fileType = getFileType(zdFile);
+      let fileType = cifhelper.fileExtValidator(zdFile);
       var filePayload = service.pushBackPayload(
         EXT_CHAT_ENDPOINT, EXT_CHAT_TOKEN, 
         unitel.replyPayload(msgid, fileType, zdFile, brandid, username, userid))
@@ -183,18 +186,58 @@ router.get('/file/:string64/:filename\.:ext?', async function(req, res, next) {
   res.sendStatus(200)
 })
 
-router.post('/push', function(req, res, next) {
-  // let sampleFile = 'https://static.remove.bg/sample-gallery/graphics/bird-thumbnail.jpg';
-  goLogging('info', 'PUSH', req.body.message.from.id, req.body, req.body.message.from.username);
-  if (!req.headers.authorization) {
-    goLogging('error', 'PUSH', req.body.message.from.id, 'NO_TOKEN', req.body.message.from.username)
-    return res.status(403).json({ error: 'No credentials sent!' });
+router.post('/push_many', body('brand_id').exists(),
+  body('from.id').exists(),
+  body('from.username').exists(),
+  body('instance_id').exists(),
+  header('authorization').exists(),
+function(req, res, next) {
+  goLogging('info', 'PUSH', req.body.from.id, req.body, req.body.from.username);
+
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
   }
 
-  if (!req.body.message.from.id || !req.body.brand_id || !req.body.message.from.username || !req.body.message.id) {
-    goLogging('error', 'PUSH', req.body.message.from.id, '422', req.body.message.from.username)
-    return res.status(422).json({ error: 'Data not valid' });
+  let external_resource_array = [];
+  let msgs = req.body.messages;
+  let instance_push_id = req.body.instance_id;
+  let auth_token = req.headers['authorization'];
+  let brand_id = req.body.brand_id;
+  let customer = req.body.from;
+  msgs.forEach(msg => {
+    var msgObj = cifhelper.cifBulkPayload(msg, brand_id, USER_TICKET_ID, customer)
+    external_resource_array.push(msgObj);
+    msgObj = {};
+  });
+
+  // console.log(JSON.stringify(service.pushConversationPayload(ZD_PUSH_API, auth_token, instance_push_id, external_resource_array)))
+
+  axios(service.pushConversationPayload(ZD_PUSH_API, auth_token, instance_push_id, external_resource_array))
+  .then((response) => {
+    res.status(200).send(response.data)
+  }, (error) => {
+    console.log(error)
+    goLogging('error', 'PUSH', req.body.from.id, error, req.body.from.username);
+    res.status(200).send({error: error})
+  })
+
+})
+
+router.post('/push', body('brand_id').exists(),
+  body('message.from.id').exists(),
+  body('message.from.username').exists(),
+  body('message.id').exists() , 
+  body('instance_id').exists() ,
+  header('authorization').exists(),
+function(req, res, next) {
+  goLogging('info', 'PUSH', req.body.message.from.id, req.body, req.body.message.from.username);
+
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
   }
+
   let external_resource_array = [];
 	var msgObj = {};
   let msg = req.body.message;
@@ -218,6 +261,9 @@ router.post('/push', function(req, res, next) {
     fields:[{
       id: 'subject',
       value: 'Incoming Live Chat from: ' + username
+    },{
+      id: USER_TICKET_ID,
+      value:msg.from.id
     }],
     allow_channelback: true
   }
@@ -226,18 +272,29 @@ router.post('/push', function(req, res, next) {
     msgObj['message'] = msg_content;
   } else {
     let ext = mime.extension(mime.lookup(msg_content))
+    var fileMessage = '';
     if (!ext) {
-      msgObj['message'] = `Unsupported file ${msg_type} from User`;
-      console.log('-- unsupported file type --')
+      if (msg_type == 'image') {
+        fileMessage = `${msg_type} from User`
+        ext = 'jpeg';
+      } else if (msg_type == 'video') {
+        fileMessage = `${msg_type} from User`
+        ext = 'mp4';
+      } else {
+        fileMessage = `Unsupported file ${msg_type} from User`;
+      }
     } else {
-      msgObj['message'] = `${msg_type} from User`;
+      fileMessage = `${msg_type} from User`;
+    }
+    msgObj['message'] = fileMessage;
+    if (ext) {
       msgObj['file_urls'] = [`/api/v1/cif/file/${Buffer.from(msg_content).toString('base64')}/users-file.${ext}`]
     }
   }
 
 	external_resource_array.push(msgObj);
   msgObj = {};
-  console.log(service.pushConversationPayload(ZD_PUSH_API, authToken, instance_push_id, external_resource_array))
+  // console.log(JSON.stringify(service.pushConversationPayload(ZD_PUSH_API, authToken, instance_push_id, external_resource_array)))
   axios(service.pushConversationPayload(ZD_PUSH_API, authToken, instance_push_id, external_resource_array))
   .then((response) => {
     res.status(200).send(response.data)
@@ -247,28 +304,6 @@ router.post('/push', function(req, res, next) {
     res.status(200).send({error: error})
   })
 })
-
-function getFileType (zdFile) {
-  var fileType = '';
-  switch (mime.lookup(zdFile)) {
-    case 'image/jpeg':
-      fileType = 'image'
-      break;
-    case 'image/png':
-      fileType = 'image'
-      break;
-    case 'video/mp4':
-      fileType = 'video'
-      break;
-    case 'video/mpeg':
-      fileType = 'video'
-      break;
-    default:
-      fileType = 'file'
-      break;
-  }
-  return fileType;
-}
 
 function goLogging(status, process, to, message, name) {
   // if (inProd == 'false') {
