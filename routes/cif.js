@@ -169,8 +169,9 @@ router.get('/clickthrough', function(req, res, next) {
 	res.status(200).send({});	
 })
 
-router.post('/file/:string64/:filename\.:ext?', function(req, res, next) {
-  let fileUrl = Buffer.from(req.params.string64, 'base64').toString('ascii')
+router.post('/file/:filename\.:ext?', function(req, res, next) {
+  // let fileUrl = Buffer.from(req.params.string64, 'base64').toString('ascii')
+  let fileUrl = req.query.source;
   request.get(fileUrl).on('response', function(response) {
     response.pause();
     if (response.statusCode == 200) {
@@ -179,10 +180,12 @@ router.post('/file/:string64/:filename\.:ext?', function(req, res, next) {
   })
 })
 
-router.get('/file/:string64/:filename\.:ext?', async function(req, res, next) {
-  let fileUrl = Buffer.from(req.params.string64, 'base64').toString('ascii')
-  console.log(fileUrl)
-  console.log(mime.extension(mime.lookup(fileUrl)))
+router.get('/file/:filename\.:ext?', async function(req, res, next) {
+  console.log(req.query)
+  console.log(req.params)
+  // let fileUrl = Buffer.from(req.params.string64, 'base64').toString('ascii')
+  // console.log(fileUrl)
+  // console.log(mime.extension(mime.lookup(fileUrl)))
   res.sendStatus(200)
 })
 
@@ -288,7 +291,8 @@ function(req, res, next) {
     }
     msgObj['message'] = fileMessage;
     if (ext) {
-      msgObj['file_urls'] = [`/api/v1/cif/file/${Buffer.from(msg_content).toString('base64')}/users-file.${ext}`]
+      // msgObj['file_urls'] = [`/api/v1/cif/file/${Buffer.from(msg_content).toString('base64')}/users-file.${ext}`]
+      msgObj['file_urls'] = [`/api/v1/cif/file/users-file.${ext}?source=${msg_content}`]
     }
   }
 

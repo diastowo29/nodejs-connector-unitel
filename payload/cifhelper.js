@@ -49,7 +49,8 @@ const cifBulkPayload = function (msg, brand_id, user_ticket_id, customer) {
       }
       msgObj['message'] = fileMessage;
       if (ext) {
-        msgObj['file_urls'] = [`/api/v1/cif/file/${Buffer.from(msg_content).toString('base64')}/users-file.${ext}`]
+        // msgObj['file_urls'] = [`/api/v1/cif/file/${Buffer.from(msg_content).toString('base64')}/users-file.${ext}`]
+        msgObj['file_urls'] = [`/api/v1/cif/file/users-file.${ext}?source=${msg_content}`]
       }
     }
     return msgObj;
