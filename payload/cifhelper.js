@@ -7,7 +7,7 @@ const cifBulkPayload = function (msg, brand_id, user_ticket_id, customer) {
     let ticket_external_id = `unitel-ticket-${msg.author.id}-${msg.id}-${Date.now()}`;
     let ticket_thread_id = `unitel-thread-${customer.id}-${brand_id}`;
     let author_external_id = Buffer.from(`unitel-${msg.author.username}-${msg.author.id}`).toString('base64');
-    let msg_timestamp = msg.timestamp;
+    let msg_timestamp = msg.timestamp.replaceAll(' ', '').replace('+0000', 'Z');
     let msg_type = msg.type;
     let msg_content = msg.content;
     
@@ -30,7 +30,10 @@ const cifBulkPayload = function (msg, brand_id, user_ticket_id, customer) {
     }
 
     if (msg_type == 'text') {
-      msgObj['message'] = msg_content;
+        if (msg_content == '') {
+            msg_content = '- empty message -'
+        }
+        msgObj['message'] = msg_content.replaceAll('\"', '\'');
     } else {
       let ext = mime.extension(mime.lookup(msg_content))
       var fileMessage = '';
@@ -53,6 +56,9 @@ const cifBulkPayload = function (msg, brand_id, user_ticket_id, customer) {
         msgObj['file_urls'] = [`/api/v1/cif/file/users-file.${ext}?source=${msg_content}`]
       }
     }
+    // if (msg.id == 'm_SxzMxgtBwLz7MFwDM4HLpaUB7M7hEy4XCvp95f6tT-_UYp-D_lC04uAutH5OReALVDxtz889e8bl5mZ5AEW1Pg') {
+        // console.log(JSON.stringify(msgObj))
+    // }
     return msgObj;
 }
 

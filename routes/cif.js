@@ -27,15 +27,15 @@ winston.add(new Loggly({
   json: true
 }));
 
-axiosRetry(axios, {
-  retries: 3,
-  retryCondition: (e) => {
-    return (
-      axiosRetry.isNetworkOrIdempotentRequestError(e) ||
-      e.response.status != 200
-    );
-  }
-})
+// axiosRetry(axios, {
+//   retries: 3,
+//   retryCondition: (e) => {
+//     return (
+//       axiosRetry.isNetworkOrIdempotentRequestError(e) ||
+//       e.response.status != 200
+//     );
+//   }
+// })
 
 /* GET home page. */
 router.get('/manifest', function(req, res, next) {
@@ -195,7 +195,7 @@ router.post('/push_many', body('brand_id').exists(),
   body('instance_id').exists(),
   header('authorization').exists(),
 function(req, res, next) {
-  goLogging('info', 'PUSH', req.body.from.id, req.body, req.body.from.username);
+  // goLogging('info', 'PUSH', req.body.from.id, req.body, req.body.from.username);
 
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -209,7 +209,7 @@ function(req, res, next) {
   let brand_id = req.body.brand_id;
   let customer = req.body.from;
   msgs.forEach(msg => {
-    var msgObj = cifhelper.cifBulkPayload(msg, brand_id, USER_TICKET_ID, customer)
+    var msgObj = cifhelper.cifBulkPayload(msg, brand_id, USER_TICKET_ID, customer);
     external_resource_array.push(msgObj);
     msgObj = {};
   });
@@ -224,7 +224,6 @@ function(req, res, next) {
     goLogging('error', 'PUSH', req.body.from.id, error, req.body.from.username);
     res.status(200).send({error: error})
   })
-
 })
 
 router.post('/push', body('brand_id').exists(),
