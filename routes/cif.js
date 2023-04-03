@@ -170,7 +170,6 @@ router.get('/clickthrough', function(req, res, next) {
 })
 
 router.post('/file/:filename\.:ext?', function(req, res, next) {
-  // let fileUrl = Buffer.from(req.params.string64, 'base64').toString('ascii')
   let fileUrl = req.query.source;
   request.get(fileUrl).on('response', function(response) {
     response.pause();
@@ -181,11 +180,8 @@ router.post('/file/:filename\.:ext?', function(req, res, next) {
 })
 
 router.get('/file/:filename\.:ext?', async function(req, res, next) {
-  console.log(req.query)
-  console.log(req.params)
-  // let fileUrl = Buffer.from(req.params.string64, 'base64').toString('ascii')
-  // console.log(fileUrl)
-  // console.log(mime.extension(mime.lookup(fileUrl)))
+  // console.log(req.query)
+  // console.log(req.params)
   res.sendStatus(200)
 })
 
@@ -195,7 +191,7 @@ router.post('/push_many', body('brand_id').exists(),
   body('instance_id').exists(),
   header('authorization').exists(),
 function(req, res, next) {
-  // goLogging('info', 'PUSH', req.body.from.id, req.body, req.body.from.username);
+  goLogging('info', 'PUSH', req.body.from.id, req.body, req.body.from.username);
 
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -214,8 +210,7 @@ function(req, res, next) {
     msgObj = {};
   });
 
-  // console.log(JSON.stringify(service.pushConversationPayload(ZD_PUSH_API, auth_token, instance_push_id, external_resource_array)))
-
+  // res.status(200).send(service.pushConversationPayload(ZD_PUSH_API, authToken, instance_push_id, external_resource_array))
   axios(service.pushConversationPayload(ZD_PUSH_API, auth_token, instance_push_id, external_resource_array))
   .then((response) => {
     res.status(200).send(response.data)
@@ -243,61 +238,13 @@ function(req, res, next) {
   let external_resource_array = [];
 	var msgObj = {};
   let msg = req.body.message;
-  let username = msg.from.username || msg.from.first_name;
-	let ticket_external_id = `unitel-ticket-${msg.from.id}-${msg.id}-${Date.now()}`;
-	let ticket_thread_id = `unitel-thread-${msg.from.id}-${req.body.brand_id}`;
-	let author_external_id = Buffer.from(`unitel-${msg.from.username}-${msg.from.id}`).toString('base64');
-  let msg_type = msg.type;
-  let msg_content = msg.content;
   let instance_push_id = req.body.instance_id;
   let authToken = req.headers['authorization'];
 
-  msgObj = {
-    external_id: ticket_external_id,
-    thread_id: ticket_thread_id,
-    created_at: new Date().toISOString(),
-    author: {
-        external_id: author_external_id,
-        name: username
-    },
-    fields:[{
-      id: 'subject',
-      value: 'Incoming Live Chat from: ' + username
-    },{
-      id: USER_TICKET_ID,
-      value:msg.from.id
-    }],
-    allow_channelback: true
-  }
-
-  if (msg_type == 'text') {
-    msgObj['message'] = msg_content;
-  } else {
-    let ext = mime.extension(mime.lookup(msg_content))
-    var fileMessage = '';
-    if (!ext) {
-      if (msg_type == 'image') {
-        fileMessage = `${msg_type} from User`
-        ext = 'jpeg';
-      } else if (msg_type == 'video') {
-        fileMessage = `${msg_type} from User`
-        ext = 'mp4';
-      } else {
-        fileMessage = `Unsupported file ${msg_type} from User`;
-      }
-    } else {
-      fileMessage = `${msg_type} from User`;
-    }
-    msgObj['message'] = fileMessage;
-    if (ext) {
-      // msgObj['file_urls'] = [`/api/v1/cif/file/${Buffer.from(msg_content).toString('base64')}/users-file.${ext}`]
-      msgObj['file_urls'] = [`/api/v1/cif/file/users-file.${ext}?source=${msg_content}`]
-    }
-  }
-
+  msgObj = cifhelper.cifPayload(msg, req.body.brand_id, USER_TICKET_ID)
 	external_resource_array.push(msgObj);
   msgObj = {};
-  // console.log(JSON.stringify(service.pushConversationPayload(ZD_PUSH_API, authToken, instance_push_id, external_resource_array)))
+  // res.status(200).send(service.pushConversationPayload(ZD_PUSH_API, authToken, instance_push_id, external_resource_array))
   axios(service.pushConversationPayload(ZD_PUSH_API, authToken, instance_push_id, external_resource_array))
   .then((response) => {
     res.status(200).send(response.data)
@@ -309,16 +256,14 @@ function(req, res, next) {
 })
 
 function goLogging(status, process, to, message, name) {
-  // if (inProd == 'false') {
-    winston.log(status, {
-      process: process,
-      status: status,
-      to: to,
-      username: name,
-      message: message,
-      client: clientName
-    });
-  // }
+  winston.log(status, {
+    process: process,
+    status: status,
+    to: to,
+    username: name,
+    message: message,
+    client: clientName
+  });
 }
 
 module.exports = router;
