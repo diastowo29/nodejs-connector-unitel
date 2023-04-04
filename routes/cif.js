@@ -139,6 +139,7 @@ router.post('/channelback', function(req, res, next) {
   cb_arr.forEach((cb, i) => {
     // console.log(cb)
     axios(cb).then((response) => {
+      goLogging('info', 'CHANNELBACK', userid, cb.data, username);
       if (response.status == 200) {
         console.log(response.data)
         if (response.data.status == 'failed') {
@@ -147,8 +148,8 @@ router.post('/channelback', function(req, res, next) {
             res.status(401).send(response.data);
           }
         }
-        goLogging('info', 'CHANNELBACK', userid, req.body, username);
         if (i == 0) {
+          goLogging('info', 'CHANNELBACK', userid, response.data, username);
           res.status(200).send({
             external_id: msgid
           });	
