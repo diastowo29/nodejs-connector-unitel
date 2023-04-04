@@ -112,8 +112,8 @@ router.post('/pull', function(req, res, next) {
 
 router.post('/channelback', function(req, res, next) {
 	let recipient = Buffer.from(req.body.recipient_id, 'base64').toString('ascii')
-  let username = recipient.split('-')[1];
-  let userid = recipient.split('-')[2];
+  let username = recipient.split('::')[1];
+  let userid = recipient.split('::')[2];
   let brandid = req.body.thread_id.split('-')[3];
   let msgid = `unitel-ticket-${userid}-channelback-${Date.now()}`;
   var cb_arr = [];
@@ -236,22 +236,19 @@ function(req, res, next) {
   }
 
   let external_resource_array = [];
-	var msgObj = {};
   let msg = req.body.message;
-  let instance_push_id = req.body.instance_id;
   let authToken = req.headers['authorization'];
-
-  msgObj = cifhelper.cifPayload(msg, req.body.brand_id, USER_TICKET_ID)
+  
+	var msgObj = cifhelper.cifPayload(msg, req.body.brand_id, USER_TICKET_ID)
 	external_resource_array.push(msgObj);
   msgObj = {};
-  // res.status(200).send(service.pushConversationPayload(ZD_PUSH_API, authToken, instance_push_id, external_resource_array))
-  axios(service.pushConversationPayload(ZD_PUSH_API, authToken, instance_push_id, external_resource_array))
+  // res.status(200).send(service.pushConversationPayload(ZD_PUSH_API, authToken, req.body.instance_id, external_resource_array))
+  axios(service.pushConversationPayload(ZD_PUSH_API, authToken, req.body.instance_id, external_resource_array))
   .then((response) => {
     res.status(200).send(response.data)
   }, (error) => {
-    console.log(error)
     goLogging('error', 'PUSH', req.body.message.from.id, error, req.body.message.from.username);
-    res.status(200).send({error: error})
+    res.status(error.status).send({error: error})
   })
 })
 
