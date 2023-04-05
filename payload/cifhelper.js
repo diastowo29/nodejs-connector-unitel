@@ -1,3 +1,5 @@
+var mime = require('mime-types')
+
 const cifBulkPayload = function (msg, brand_id, user_ticket_id, customer) {
     // const replybackPayload = 
     // return replybackPayload;

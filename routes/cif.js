@@ -15,7 +15,6 @@ const EXT_CHAT_ENDPOINT = `${EXT_CHAT_HOST}webhooks/facebook/test/direct`;
 const EXT_CHAT_TOKEN = process.env.EXT_CHAT_TOKEN || 'xxx';
 const LOGGLY_TOKEN = process.env.LOGGLY_TOKEN || '25cbd41e-e0a1-4289-babf-762a2e6967b6';
 const USER_TICKET_ID = process.env.USER_TICKET_ID || '6681549599887';
-var mime = require('mime-types')
 var winston = require('winston');
 var { Loggly } = require('winston-loggly-bulk');
 let clientName = 'UNITEL'
@@ -40,8 +39,6 @@ winston.add(new Loggly({
 /* GET home page. */
 router.get('/manifest', function(req, res, next) {
     let host = req.hostname
-    // goLogging('')
-
     res.send({
       name: "Unitel Chat",
       id: "trees-unitel-chat-integration",
@@ -69,7 +66,6 @@ router.get('/admin', function(req, res, next) {
 })
 
 router.post('/admin', function(req, res, next) {
-  console.log(JSON.stringify(req.body))
   let instance_push_id = req.body.instance_push_id
   let zd_token = req.body.zendesk_access_token
   let locale = req.body.locale
@@ -137,7 +133,7 @@ router.post('/channelback', function(req, res, next) {
   }
 
   cb_arr.forEach((cb, i) => {
-    // console.log(cb)
+    console.log(cb)
     axios(cb).then((response) => {
       goLogging('info', 'CHANNELBACK', userid, cb.data, username);
       if (response.status == 200) {
@@ -157,7 +153,7 @@ router.post('/channelback', function(req, res, next) {
       }
     }, (error) => {
     	console.log('error')
-    	console.log(error.response.status)
+      console.log(error)
       goLogging('error', 'CHANNELBACK', userid, error.response, username);
       if (i == 0) {
         res.status(error.response.status).send({});
@@ -173,10 +169,17 @@ router.get('/clickthrough', function(req, res, next) {
 router.post('/file/:filename\.:ext?', function(req, res, next) {
   let fileUrl = req.query.source;
   request.get(fileUrl).on('response', function(response) {
+    console.log(JSON.stringify(response))
     response.pause();
     if (response.statusCode == 200) {
       response.pipe(res)
     }
+  }).on('error', function(errRspn) {
+    console.log('error')
+    console.log(errRspn)
+  }).on('timeout', function(timeRspn) {
+    console.log('timeout')
+    console.log(timeRspn)
   })
 })
 
