@@ -168,21 +168,21 @@ router.get('/clickthrough', function(req, res, next) {
 
 router.post('/file/:filename\.:ext?', function(req, res, next) {
   let fileUrl = req.query.source;
-  request.get(fileUrl).on('response', function(response) {
-    console.log(JSON.stringify(response))
-    response.pause();
-    if (response.statusCode == 200) {
-      response.pipe(res)
-    } else {
-      res.status(response.statusCode)
-    }
-  }).on('error', function(errRspn) {
-    console.log('error')
-    console.log(errRspn)
-  }).on('timeout', function(timeRspn) {
-    console.log('timeout')
-    console.log(timeRspn)
-  })
+  // request.get(fileUrl).on('response', function(response) {
+  //   console.log(response.statusCode)
+  //   response.pause();
+  //   if (response.statusCode == 200) {
+  //     response.pipe(res)
+  //   }
+  // }).on('error', function(errRspn) {
+  //   console.log('error')
+  //   console.log(errRspn)
+  // }).on('timeout', function(timeRspn) {
+  //   console.log('timeout')
+  //   console.log(timeRspn)
+  // })
+  request.get(fileUrl).pipe(res)
+  // req.pipe(request(fileUrl)).pipe(res)
 })
 
 router.get('/file/:filename\.:ext?', async function(req, res, next) {
