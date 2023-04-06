@@ -234,7 +234,7 @@ router.post('/push', body('brand_id').exists(),
   body('instance_id').exists() ,
   header('authorization').exists(),
 async function(req, res, next) {
-  // goLogging('info', 'PUSH', req.body.message.from.id, req.body, req.body.message.from.username);
+  goLogging('info', 'PUSH', req.body.message.from.id, req.body, req.body.message.from.username);
 
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -248,14 +248,14 @@ async function(req, res, next) {
 	var msgObj = await cifhelper.cifPayload(msg, req.body.brand_id, USER_TICKET_ID)
 	external_resource_array.push(msgObj);
   msgObj = {};
-  res.status(200).send(service.pushConversationPayload(ZD_PUSH_API, authToken, req.body.instance_id, external_resource_array))
-  // axios(service.pushConversationPayload(ZD_PUSH_API, authToken, req.body.instance_id, external_resource_array))
-  // .then((response) => {
-  //   res.status(200).send(response.data)
-  // }, (error) => {
-  //   goLogging('error', 'PUSH', req.body.message.from.id, error, req.body.message.from.username);
-  //   res.status(error.status).send({error: error})
-  // })
+  // res.status(200).send(service.pushConversationPayload(ZD_PUSH_API, authToken, req.body.instance_id, external_resource_array))
+  axios(service.pushConversationPayload(ZD_PUSH_API, authToken, req.body.instance_id, external_resource_array))
+  .then((response) => {
+    res.status(200).send(response.data)
+  }, (error) => {
+    goLogging('error', 'PUSH', req.body.message.from.id, error, req.body.message.from.username);
+    res.status(error.status).send({error: error})
+  })
 })
 
 function goLogging(status, process, to, message, name) {

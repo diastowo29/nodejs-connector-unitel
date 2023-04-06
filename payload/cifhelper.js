@@ -50,7 +50,15 @@ const cifBulkPayload = function (msg, brand_id, user_ticket_id, customer) {
           fileMessage = `${msg_type} from User`
           ext = 'mp4';
         } else {
-          fileMessage = `Unsupported ${msg_type} from User`;
+          if (msg_type == 'file') {
+            const tFile = await axios.get(msg_content)
+            if (mime.extension(tFile.headers['content-type'])) {
+              fileMessage = `${msg_type} from User`
+              ext = mime.extension(tFile.headers['content-type']);
+            } else {
+              fileMessage = `Unsupported ${msg_type} from User`;
+            }
+          }
         }
       } else {
         fileMessage = `${msg_type} from User`;
