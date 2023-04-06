@@ -3,7 +3,7 @@ var request = require('request');
 var reqProm = require('request-promise');
 const axios = require('axios');
 
-const cifBulkPayload = function (msg, brand_id, user_ticket_id, customer) {
+const cifBulkPayload = async function (msg, brand_id, user_ticket_id, customer) {
     // const replybackPayload = 
     // return replybackPayload;
 
