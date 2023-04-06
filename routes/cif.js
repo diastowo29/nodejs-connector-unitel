@@ -208,13 +208,13 @@ function(req, res, next) {
   let auth_token = req.headers['authorization'];
   let brand_id = req.body.brand_id;
   let customer = req.body.from;
-  msgs.forEach(msg => {
+  msgs.slice().reverse().forEach(msg => {
     var msgObj = cifhelper.cifBulkPayload(msg, brand_id, USER_TICKET_ID, customer);
     external_resource_array.push(msgObj);
     msgObj = {};
   });
 
-  // res.status(200).send(service.pushConversationPayload(ZD_PUSH_API, authToken, instance_push_id, external_resource_array))
+  // res.status(200).send(service.pushConversationPayload(ZD_PUSH_API, auth_token, instance_push_id, external_resource_array))
   axios(service.pushConversationPayload(ZD_PUSH_API, auth_token, instance_push_id, external_resource_array))
   .then((response) => {
     res.status(200).send(response.data)
