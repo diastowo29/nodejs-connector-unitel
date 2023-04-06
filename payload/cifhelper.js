@@ -1,4 +1,7 @@
 var mime = require('mime-types')
+var request = require('request');
+var reqProm = require('request-promise');
+const axios = require('axios');
 
 const cifBulkPayload = function (msg, brand_id, user_ticket_id, customer) {
     // const replybackPayload = 
@@ -47,7 +50,7 @@ const cifBulkPayload = function (msg, brand_id, user_ticket_id, customer) {
           fileMessage = `${msg_type} from User`
           ext = 'mp4';
         } else {
-          fileMessage = `Unsupported file ${msg_type} from User`;
+          fileMessage = `Unsupported ${msg_type} from User`;
         }
       } else {
         fileMessage = `${msg_type} from User`;
@@ -64,7 +67,7 @@ const cifBulkPayload = function (msg, brand_id, user_ticket_id, customer) {
     return msgObj;
 }
 
-const cifPayload = function (msg, brand_id, user_ticket_id) {
+const cifPayload = async function (msg, brand_id, user_ticket_id) {
   var msgObj = {};
   let username = msg.from.username || msg.from.first_name;
 	let ticket_external_id = `unitel-ticket-${msg.from.id}-${msg.id}-${Date.now()}`;
@@ -94,6 +97,7 @@ const cifPayload = function (msg, brand_id, user_ticket_id) {
     msgObj['message'] = msg_content;
   } else {
     let ext = mime.extension(mime.lookup(msg_content))
+    // console.log(ext)
     var fileMessage = '';
     if (!ext) {
       if (msg_type == 'image') {
@@ -103,7 +107,15 @@ const cifPayload = function (msg, brand_id, user_ticket_id) {
         fileMessage = `${msg_type} from User`
         ext = 'mp4';
       } else {
-        fileMessage = `Unsupported file ${msg_type} from User`;
+        if (msg_type == 'file') {
+          const tFile = await axios.get(msg_content)
+          if (mime.extension(tFile.headers['content-type'])) {
+            fileMessage = `${msg_type} from User`
+            ext = mime.extension(tFile.headers['content-type']);
+          } else {
+            fileMessage = `Unsupported ${msg_type} from User`;
+          }
+        }
       }
     } else {
       fileMessage = `${msg_type} from User`;
@@ -114,6 +126,10 @@ const cifPayload = function (msg, brand_id, user_ticket_id) {
     }
   }
   return msgObj;
+}
+
+function mimeGetter () {
+
 }
 
 const fileExtValidator = function (zdFile) {
