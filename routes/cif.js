@@ -133,11 +133,11 @@ router.post('/channelback', function(req, res, next) {
   }
 
   cb_arr.forEach((cb, i) => {
-    console.log(cb)
+    // console.log(cb)
     axios(cb).then((response) => {
       goLogging('info', 'CHANNELBACK', userid, cb.data, username);
       if (response.status == 200) {
-        console.log(response.data)
+        // console.log(response.data)
         if (response.data.status == 'failed') {
           if (response.data.response == 'Unauthorized') {
             goLogging('error', 'CHANNELBACK-401', userid, req.body, username);
