@@ -173,6 +173,8 @@ router.post('/file/:filename\.:ext?', function(req, res, next) {
     response.pause();
     if (response.statusCode == 200) {
       response.pipe(res)
+    } else {
+      res.status(response.statusCode)
     }
   }).on('error', function(errRspn) {
     console.log('error')
