@@ -196,7 +196,7 @@ router.post('/push_many', body('brand_id').exists(),
   body('from.username').exists(),
   body('instance_id').exists(),
   header('authorization').exists(),
-function(req, res, next) {
+async function(req, res, next) {
   goLogging('info', 'PUSH', req.body.from.id, req.body, req.body.from.username);
 
   const errors = validationResult(req);
@@ -210,21 +210,23 @@ function(req, res, next) {
   let auth_token = req.headers['authorization'];
   let brand_id = req.body.brand_id;
   let customer = req.body.from;
-  msgs.slice().reverse().forEach(msg => {
-    var msgObj = cifhelper.cifBulkPayload(msg, brand_id, USER_TICKET_ID, customer);
+  await msgs.slice().reverse().forEach(async msg => {
+    var msgObj = await cifhelper.cifBulkPayload(msg, brand_id, USER_TICKET_ID, customer);
     external_resource_array.push(msgObj);
+    console.log(msgObj)
     msgObj = {};
   });
+  console.log(external_resource_array)
 
-  // res.status(200).send(service.pushConversationPayload(ZD_PUSH_API, auth_token, instance_push_id, external_resource_array))
-  axios(service.pushConversationPayload(ZD_PUSH_API, auth_token, instance_push_id, external_resource_array))
-  .then((response) => {
-    res.status(200).send(response.data)
-  }, (error) => {
-    console.log(error)
-    goLogging('error', 'PUSH', req.body.from.id, error, req.body.from.username);
-    res.status(200).send({error: error})
-  })
+  res.status(200).send(service.pushConversationPayload(ZD_PUSH_API, auth_token, instance_push_id, external_resource_array))
+  // axios(service.pushConversationPayload(ZD_PUSH_API, auth_token, instance_push_id, external_resource_array))
+  // .then((response) => {
+  //   res.status(200).send(response.data)
+  // }, (error) => {
+  //   console.log(error)
+  //   goLogging('error', 'PUSH', req.body.from.id, error, req.body.from.username);
+  //   res.status(200).send({error: error})
+  // })
 })
 
 router.post('/push', body('brand_id').exists(),

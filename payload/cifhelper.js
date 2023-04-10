@@ -1,6 +1,4 @@
-var mime = require('mime-types')
-var request = require('request');
-var reqProm = require('request-promise');
+var mime = require('mime-types');
 const axios = require('axios');
 
 const cifBulkPayload = async function (msg, brand_id, user_ticket_id, customer) {
@@ -33,6 +31,7 @@ const cifBulkPayload = async function (msg, brand_id, user_ticket_id, customer) 
       }],
       allow_channelback: true
     }
+    // console.log(msgObj)
 
     if (msg_type == 'text') {
         if (msg_content == '') {
