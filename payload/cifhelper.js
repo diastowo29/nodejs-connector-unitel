@@ -61,12 +61,18 @@ const cifBulkPayload = async function (msg, brand_id, user_ticket_id, customer) 
           ext = 'mp4';
         } else {
           if (msg_type == 'file') {
-            const tFile = await axios.get(msg_content)
-            if (mime.extension(tFile.headers['content-type'])) {
-              fileMessage = `${msg_type} from User`
-              ext = mime.extension(tFile.headers['content-type']);
-            } else {
-              fileMessage = `Unsupported ${msg_type} from User`;
+            var tFile;
+            try {
+              tFile = await axios.get(msg_content)
+              if (mime.extension(tFile.headers['content-type'])) {
+                fileMessage = `${msg_type} from User`
+                ext = mime.extension(tFile.headers['content-type']);
+              } else {
+                fileMessage = `Unsupported ${msg_type} from User`;
+              }
+            } catch (err) {
+              fileMessage = `Error getting file ${msg_type} from User`;
+              goLogging('error', 'FILE', msg.from.id, err, username);
             }
           }
         }
@@ -135,9 +141,7 @@ const cifPayload = async function (msg, brand_id, user_ticket_id) {
               fileMessage = `Unsupported ${msg_type} from User`;
             }
           } catch (err) {
-            console.log('err')
             fileMessage = `Error getting file ${msg_type} from User`;
-            console.log(err)
             goLogging('error', 'FILE', msg.from.id, err, username);
           }
         }
