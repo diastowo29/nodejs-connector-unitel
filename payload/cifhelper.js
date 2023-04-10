@@ -63,7 +63,7 @@ const cifBulkPayload = async function (msg, brand_id, user_ticket_id, customer) 
           if (msg_type == 'file') {
             var tFile;
             try {
-              tFile = await axios.get(msg_content)
+              tFile = await axios.get(decodeURIComponent(msg_content))
               if (mime.extension(tFile.headers['content-type'])) {
                 fileMessage = `${msg_type} from User`
                 ext = mime.extension(tFile.headers['content-type']);
@@ -71,7 +71,7 @@ const cifBulkPayload = async function (msg, brand_id, user_ticket_id, customer) 
                 fileMessage = `Unsupported ${msg_type} from User`;
               }
             } catch (err) {
-              fileMessage = `Error getting file ${msg_type} from User`;
+              fileMessage = `Error getting ${msg_type} from User`;
               goLogging('error', 'FILE', msg.from.id, err, username);
             }
           }
@@ -133,7 +133,7 @@ const cifPayload = async function (msg, brand_id, user_ticket_id) {
         if (msg_type == 'file') {
           var tFile;
           try {
-            tFile = await axios.get(msg_content)
+            tFile = await axios.get(decodeURIComponent(msg_content))
             if (mime.extension(tFile.headers['content-type'])) {
               fileMessage = `${msg_type} from User`
               ext = mime.extension(tFile.headers['content-type']);
