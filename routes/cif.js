@@ -237,7 +237,6 @@ router.post('/push', body('brand_id').exists(),
   header('authorization').exists(),
 async function(req, res, next) {
   goLogging('info', 'PUSH', req.body.message.from.id, req.body, req.body.message.from.username);
-
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });

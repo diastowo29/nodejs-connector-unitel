@@ -116,7 +116,7 @@ const cifPayload = async function (msg, brand_id, user_ticket_id) {
       } else {
         if (msg_type == 'file') {
           const tFile = await axios.get(msg_content)
-          console.log(tFile)
+          // console.log(tFile)
           if (mime.extension(tFile.headers['content-type'])) {
             fileMessage = `${msg_type} from User`
             ext = mime.extension(tFile.headers['content-type']);
