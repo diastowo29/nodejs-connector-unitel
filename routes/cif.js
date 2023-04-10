@@ -218,15 +218,15 @@ async function(req, res, next) {
   });
   console.log(external_resource_array)
 
-  res.status(200).send(service.pushConversationPayload(ZD_PUSH_API, auth_token, instance_push_id, external_resource_array))
-  // axios(service.pushConversationPayload(ZD_PUSH_API, auth_token, instance_push_id, external_resource_array))
-  // .then((response) => {
-  //   res.status(200).send(response.data)
-  // }, (error) => {
-  //   console.log(error)
-  //   goLogging('error', 'PUSH', req.body.from.id, error, req.body.from.username);
-  //   res.status(200).send({error: error})
-  // })
+  // res.status(200).send(service.pushConversationPayload(ZD_PUSH_API, auth_token, instance_push_id, external_resource_array))
+  axios(service.pushConversationPayload(ZD_PUSH_API, auth_token, instance_push_id, external_resource_array))
+  .then((response) => {
+    res.status(200).send(response.data)
+  }, (error) => {
+    console.log(error)
+    goLogging('error', 'PUSH', req.body.from.id, error, req.body.from.username);
+    res.status(200).send({error: error})
+  })
 })
 
 router.post('/push', body('brand_id').exists(),
