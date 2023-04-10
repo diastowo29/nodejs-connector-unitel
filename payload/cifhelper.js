@@ -1,5 +1,16 @@
 var mime = require('mime-types');
 const axios = require('axios');
+const LOGGLY_TOKEN = process.env.LOGGLY_TOKEN || '25cbd41e-e0a1-4289-babf-762a2e6967b6';
+var winston = require('winston');
+var { Loggly } = require('winston-loggly-bulk');
+let clientName = 'UNITEL'
+
+winston.add(new Loggly({
+  token: LOGGLY_TOKEN,
+  subdomain: "diastowo",
+  tags: ["cif"],
+  json: true
+}));
 
 const cifBulkPayload = async function (msg, brand_id, user_ticket_id, customer) {
     // const replybackPayload = 
@@ -104,7 +115,6 @@ const cifPayload = async function (msg, brand_id, user_ticket_id) {
     msgObj['message'] = msg_content;
   } else {
     let ext = mime.extension(mime.lookup(msg_content))
-    // console.log(ext)
     var fileMessage = '';
     if (!ext) {
       if (msg_type == 'image') {
@@ -115,13 +125,20 @@ const cifPayload = async function (msg, brand_id, user_ticket_id) {
         ext = 'mp4';
       } else {
         if (msg_type == 'file') {
-          const tFile = await axios.get(msg_content)
-          // console.log(tFile)
-          if (mime.extension(tFile.headers['content-type'])) {
-            fileMessage = `${msg_type} from User`
-            ext = mime.extension(tFile.headers['content-type']);
-          } else {
-            fileMessage = `Unsupported ${msg_type} from User`;
+          var tFile;
+          try {
+            tFile = await axios.get(msg_content)
+            if (mime.extension(tFile.headers['content-type'])) {
+              fileMessage = `${msg_type} from User`
+              ext = mime.extension(tFile.headers['content-type']);
+            } else {
+              fileMessage = `Unsupported ${msg_type} from User`;
+            }
+          } catch (err) {
+            console.log('err')
+            fileMessage = `Error getting file ${msg_type} from User`;
+            console.log(err)
+            goLogging('error', 'FILE', msg.from.id, err, username);
           }
         }
       }
@@ -160,6 +177,17 @@ const fileExtValidator = function (zdFile) {
         break;
     }
     return fileType;
+}
+
+function goLogging(status, process, to, message, name) {
+  winston.log(status, {
+    process: process,
+    status: status,
+    to: to,
+    username: name,
+    message: message,
+    client: clientName
+  });
 }
 
 module.exports = {
