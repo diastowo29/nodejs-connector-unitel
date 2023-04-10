@@ -213,10 +213,10 @@ async function(req, res, next) {
   await msgs.slice().reverse().forEach(async msg => {
     var msgObj = await cifhelper.cifBulkPayload(msg, brand_id, USER_TICKET_ID, customer);
     external_resource_array.push(msgObj);
-    console.log(msgObj)
+    // console.log(msgObj)
     msgObj = {};
   });
-  console.log(external_resource_array)
+  // console.log(external_resource_array)
 
   // res.status(200).send(service.pushConversationPayload(ZD_PUSH_API, auth_token, instance_push_id, external_resource_array))
   axios(service.pushConversationPayload(ZD_PUSH_API, auth_token, instance_push_id, external_resource_array))
