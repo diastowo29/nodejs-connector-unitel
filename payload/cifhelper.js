@@ -42,7 +42,6 @@ const cifBulkPayload = async function (msg, brand_id, user_ticket_id, customer) 
       }],
       allow_channelback: true
     }
-    // console.log(msgObj)
 
     if (msg_type == 'text') {
         if (msg_content == '') {
@@ -81,13 +80,9 @@ const cifBulkPayload = async function (msg, brand_id, user_ticket_id, customer) 
       }
       msgObj['message'] = fileMessage;
       if (ext) {
-        // msgObj['file_urls'] = [`/api/v1/cif/file/${Buffer.from(msg_content).toString('base64')}/users-file.${ext}`]
         msgObj['file_urls'] = [`/api/v1/cif/file/users-file.${ext}?source=${msg_content}`]
       }
     }
-    // if (msg.id == 'm_SxzMxgtBwLz7MFwDM4HLpaUB7M7hEy4XCvp95f6tT-_UYp-D_lC04uAutH5OReALVDxtz889e8bl5mZ5AEW1Pg') {
-        // console.log(JSON.stringify(msgObj))
-    // }
     return msgObj;
 }
 
@@ -141,7 +136,7 @@ const cifPayload = async function (msg, brand_id, user_ticket_id) {
               fileMessage = `Unsupported ${msg_type} from User`;
             }
           } catch (err) {
-            fileMessage = `Error getting file ${msg_type} from User`;
+            fileMessage = `Error getting ${msg_type} from User`;
             goLogging('error', 'FILE', msg.from.id, err, username);
           }
         }

@@ -132,11 +132,9 @@ router.post('/channelback', function(req, res, next) {
   }
 
   cb_arr.forEach((cb, i) => {
-    // console.log(cb)
     axios(cb).then((response) => {
       goLogging('info', 'CHANNELBACK', userid, cb.data, username);
       if (response.status == 200) {
-        // console.log(response.data)
         if (response.data.status == 'failed') {
           if (response.data.response == 'Unauthorized') {
             goLogging('error', 'CHANNELBACK-401', userid, req.body, username);
@@ -196,7 +194,7 @@ router.post('/push_many', body('brand_id').exists(),
   body('instance_id').exists(),
   header('authorization').exists(),
 async function(req, res, next) {
-  goLogging('info', 'PUSH', req.body.from.id, req.body, req.body.from.username);
+  goLogging('info', 'PUSH-MANY', req.body.from.id, req.body, req.body.from.username);
 
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -223,7 +221,7 @@ async function(req, res, next) {
     res.status(200).send(response.data)
   }, (error) => {
     console.log(error)
-    goLogging('error', 'PUSH', req.body.from.id, error, req.body.from.username);
+    goLogging('error', 'PUSH-MANY', req.body.from.id, error, req.body.from.username);
     res.status(200).send({error: error})
   })
 })
