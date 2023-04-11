@@ -11,7 +11,7 @@ const { body, header, validationResult } = require('express-validator');
 
 const ZD_PUSH_API = process.env.ZD_PUSH_API || 'https://pdi-rokitvhelp.zendesk.com/api/v2/any_channel/push'; //ENV VARIABLE
 const EXT_CHAT_HOST = process.env.EXT_CHAT_HOST || 'xxx';
-const EXT_CHAT_ENDPOINT = `${EXT_CHAT_HOST}webhooks/facebook/test/direct`;
+const EXT_CHAT_ENDPOINT = `${EXT_CHAT_HOST}`;
 const EXT_CHAT_TOKEN = process.env.EXT_CHAT_TOKEN || 'xxx';
 const LOGGLY_TOKEN = process.env.LOGGLY_TOKEN || '25cbd41e-e0a1-4289-babf-762a2e6967b6';
 const USER_TICKET_ID = process.env.USER_TICKET_ID || '6681549599887';
@@ -92,7 +92,6 @@ router.post('/add', function(req, res, next) {
     metadata['bot_name'] = req.body.bot_name;
 
     let name = "Unitel Live Chat : " + req.body.bot_name
-
     res.render('confirm', {
         title: 'CIF Confirmation Page',
         return_url: req.body.return_url,
