@@ -9,7 +9,7 @@ const fs = require("fs");
 var request = require('request');
 const { body, header, validationResult } = require('express-validator');
 
-const ZD_PUSH_API = process.env.ZD_PUSH_API || 'https://pdi-rokitvhelp.zendesk.com/api/v2/any_channel/push'; //ENV VARIABLE
+const ZD_PUSH_API = process.env.ZD_PUSH_API || 'https://unitelgroup1680069631.zendesk.com/api/v2/any_channel/push'; //ENV VARIABLE
 const EXT_CHAT_HOST = process.env.EXT_CHAT_HOST || 'xxx';
 const EXT_CHAT_ENDPOINT = `${EXT_CHAT_HOST}`;
 const EXT_CHAT_TOKEN = process.env.EXT_CHAT_TOKEN || 'xxx';
@@ -17,7 +17,7 @@ const LOGGLY_TOKEN = process.env.LOGGLY_TOKEN || '25cbd41e-e0a1-4289-babf-762a2e
 const USER_TICKET_ID = process.env.USER_TICKET_ID || '6681549599887';
 var winston = require('winston');
 var { Loggly } = require('winston-loggly-bulk');
-let clientName = 'UNITEL'
+let clientName = 'UNITEL-PROD'
 
 winston.add(new Loggly({
   token: LOGGLY_TOKEN,
