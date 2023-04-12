@@ -220,9 +220,9 @@ async function(req, res, next) {
   .then((response) => {
     res.status(200).send(response.data)
   }, (error) => {
-    console.log(error)
+    // console.log(error)
     goLogging('error', 'PUSH-MANY', req.body.from.id, error, req.body.from.username);
-    res.status(200).send({error: error})
+    res.status(error.response.status).send({error: error})
   })
 })
 
