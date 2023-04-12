@@ -251,9 +251,9 @@ async function(req, res, next) {
   .then((response) => {
     res.status(200).send(response.data)
   }, (error) => {
-    console.log(JSON.stringify(error))
+    // console.log(JSON.stringify(error))
     goLogging('error', 'PUSH', req.body.message.from.id, error, req.body.message.from.username);
-    res.status(error.status).send({error: error})
+    res.status(error.response.status).send({error: error})
   })
 })
 
