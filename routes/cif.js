@@ -142,7 +142,7 @@ router.post('/channelback', function(req, res, next) {
           }
         }
         if (i == 0) {
-          goLogging('info', 'CHANNELBACK', userid, response.data, username, '0/0');
+          // goLogging('info', 'CHANNELBACK', userid, response.data, username, '0/0');
           res.status(200).send({
             external_id: msgid
           });	
@@ -197,7 +197,7 @@ async function(req, res, next) {
   
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    goLogging('error-params', 'PUSH-MANY', 'cif', req.body, 'cif', errors.array());
+    goLogging('error', 'PUSH-MANY', 'cif', req.body, 'cif', errors.array());
     return res.status(400).json({ errors: errors.array() });
   }
   
@@ -236,7 +236,7 @@ router.post('/push', body('brand_id').exists(),
 async function(req, res, next) {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    goLogging('error-params', 'PUSH', 'cif', req.body, 'cif', errors.array());
+    goLogging('error', 'PUSH', 'cif', req.body, 'cif', errors.array());
     return res.status(400).json({ errors: errors.array() });
   }
   
