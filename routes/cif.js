@@ -133,16 +133,16 @@ router.post('/channelback', function(req, res, next) {
 
   cb_arr.forEach((cb, i) => {
     axios(cb).then((response) => {
-      goLogging('info', 'CHANNELBACK', userid, cb.data, username);
+      goLogging('info', 'CHANNELBACK', userid, cb.data, username, '0/0');
       if (response.status == 200) {
         if (response.data.status == 'failed') {
           if (response.data.response == 'Unauthorized') {
-            goLogging('error', 'CHANNELBACK-401', userid, req.body, username);
+            goLogging('error', 'CHANNELBACK-401', userid, req.body, username, '0/0');
             res.status(401).send(response.data);
           }
         }
         if (i == 0) {
-          goLogging('info', 'CHANNELBACK', userid, response.data, username);
+          goLogging('info', 'CHANNELBACK', userid, response.data, username, '0/0');
           res.status(200).send({
             external_id: msgid
           });	
@@ -151,7 +151,7 @@ router.post('/channelback', function(req, res, next) {
     }, (error) => {
     	console.log('error')
       console.log(error)
-      goLogging('error', 'CHANNELBACK', userid, error.response, username);
+      goLogging('error', 'CHANNELBACK', userid, error.response, username, '0/0');
       if (i == 0) {
         res.status(error.response.status).send({});
       }
@@ -194,19 +194,19 @@ router.post('/push_many', body('brand_id').exists(),
   body('instance_id').exists(),
   header('authorization').exists(),
 async function(req, res, next) {
-  goLogging('info', 'PUSH-MANY', req.body.from.id, req.body, req.body.from.username);
-
+  
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
   }
-
+  
   let external_resource_array = [];
   let msgs = req.body.messages;
   let instance_push_id = req.body.instance_id;
-  let auth_token = req.headers['authorization'];
+  let authToken = req.headers['authorization'];
   let brand_id = req.body.brand_id;
   let customer = req.body.from;
+  goLogging('info', 'PUSH-MANY', req.body.from.id, req.body, req.body.from.username, `${instance_push_id}/${authToken}`);
   await msgs.slice().reverse().forEach(async msg => {
     var msgObj = await cifhelper.cifBulkPayload(msg, brand_id, USER_TICKET_ID, customer);
     external_resource_array.push(msgObj);
@@ -215,13 +215,13 @@ async function(req, res, next) {
   });
   // console.log(external_resource_array)
 
-  // res.status(200).send(service.pushConversationPayload(ZD_PUSH_API, auth_token, instance_push_id, external_resource_array))
-  axios(service.pushConversationPayload(ZD_PUSH_API, auth_token, instance_push_id, external_resource_array))
+  // res.status(200).send(service.pushConversationPayload(ZD_PUSH_API, authToken, instance_push_id, external_resource_array))
+  axios(service.pushConversationPayload(ZD_PUSH_API, authToken, instance_push_id, external_resource_array))
   .then((response) => {
     res.status(200).send(response.data)
   }, (error) => {
     // console.log(error)
-    goLogging('error', 'PUSH-MANY', req.body.from.id, error, req.body.from.username);
+    goLogging('error', 'PUSH-MANY', req.body.from.id, error, req.body.from.username, `${req.body.instance_id}/${authToken}`);
     res.status(error.response.status).send({error: error})
   })
 })
@@ -233,16 +233,17 @@ router.post('/push', body('brand_id').exists(),
   body('instance_id').exists() ,
   header('authorization').exists(),
 async function(req, res, next) {
-  goLogging('info', 'PUSH', req.body.message.from.id, req.body, req.body.message.from.username);
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
   }
-
+  
   let external_resource_array = [];
   let msg = req.body.message;
   let authToken = req.headers['authorization'];
   
+  goLogging('info', 'PUSH', req.body.message.from.id, req.body, req.body.message.from.username, `${req.body.instance_id}/${authToken}`);
+
 	var msgObj = await cifhelper.cifPayload(msg, req.body.brand_id, USER_TICKET_ID)
 	external_resource_array.push(msgObj);
   msgObj = {};
@@ -252,16 +253,17 @@ async function(req, res, next) {
     res.status(200).send(response.data)
   }, (error) => {
     // console.log(JSON.stringify(error))
-    goLogging('error', 'PUSH', req.body.message.from.id, error, req.body.message.from.username);
+    goLogging('error', 'PUSH', req.body.message.from.id, error, req.body.message.from.username, `${req.body.instance_id}/${authToken}`);
     res.status(error.response.status).send({error: error})
   })
 })
 
-function goLogging(status, process, to, message, name) {
+function goLogging(status, process, to, message, name, pushtoken) {
   winston.log(status, {
     process: process,
     status: status,
     to: to,
+    push_id_token: pushtoken,
     username: name,
     message: message,
     client: clientName
