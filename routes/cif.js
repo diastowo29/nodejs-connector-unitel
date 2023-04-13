@@ -197,6 +197,7 @@ async function(req, res, next) {
   
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
+    goLogging('error-params', 'PUSH-MANY', 'cif', req.body, 'cif', errors.array());
     return res.status(400).json({ errors: errors.array() });
   }
   
@@ -235,6 +236,7 @@ router.post('/push', body('brand_id').exists(),
 async function(req, res, next) {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
+    goLogging('error-params', 'PUSH', 'cif', req.body, 'cif', errors.array());
     return res.status(400).json({ errors: errors.array() });
   }
   
