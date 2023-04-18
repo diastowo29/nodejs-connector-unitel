@@ -9,7 +9,7 @@ const fs = require("fs");
 var request = require('request');
 const { body, header, validationResult } = require('express-validator');
 
-const ZD_PUSH_API = process.env.ZD_PUSH_API || 'https://unitelgroup1680069631.zendesk.com/api/v2/any_channel/push'; //ENV VARIABLE
+const ZD_PUSH_API = process.env.ZD_PUSH_API || 'https://pdi-rokitvhelp.zendesk.com/api/v2/any_channel/push'; //ENV VARIABLE
 const EXT_CHAT_HOST = process.env.EXT_CHAT_HOST || 'xxx';
 const EXT_CHAT_ENDPOINT = `${EXT_CHAT_HOST}`;
 const EXT_CHAT_TOKEN = process.env.EXT_CHAT_TOKEN || 'xxx';
@@ -18,6 +18,12 @@ const USER_TICKET_ID = process.env.USER_TICKET_ID || '6681549599887';
 var winston = require('winston');
 var { Loggly } = require('winston-loggly-bulk');
 let clientName = 'UNITEL-PROD'
+
+const customerIdExist = () => body('customer.id').exists().withMessage('missing customer id');
+const customerNameExist = () => body('customer.username').exists().withMessage('missing customer name');
+const msgIdExist = () => body('message.id').exists().withMessage('message should have an id');
+const instanceIdExist = () => body('instance_id').exists().withMessage('instance/push id missing');
+const tokenExist = () => header('authorization').exists().withMessage('missing token authorization');
 
 winston.add(new Loggly({
   token: LOGGLY_TOKEN,
@@ -165,99 +171,73 @@ router.get('/clickthrough', function(req, res, next) {
 
 router.post('/file/:filename\.:ext?', function(req, res, next) {
   let fileUrl = req.query.source;
-  // request.get(fileUrl).on('response', function(response) {
-  //   console.log(response.statusCode)
-  //   response.pause();
-  //   if (response.statusCode == 200) {
-  //     response.pipe(res)
-  //   }
-  // }).on('error', function(errRspn) {
-  //   console.log('error')
-  //   console.log(errRspn)
-  // }).on('timeout', function(timeRspn) {
-  //   console.log('timeout')
-  //   console.log(timeRspn)
-  // })
   request.get(fileUrl).pipe(res)
-  // req.pipe(request(fileUrl)).pipe(res)
 })
 
 router.get('/file/:filename\.:ext?', async function(req, res, next) {
-  // console.log(req.query)
-  // console.log(req.params)
   res.sendStatus(200)
 })
 
-router.post('/push_many', body('brand_id').exists(),
-  body('from.id').exists(),
-  body('from.username').exists(),
-  body('instance_id').exists(),
-  header('authorization').exists(),
+router.post('/push_many',  body('brand_id').exists(),
+tokenExist(), customerIdExist(), instanceIdExist(), customerNameExist(),
 async function(req, res, next) {
   
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    goLogging('error', 'PUSH-MANY', 'cif', req.body, 'cif', errors.array());
+    // goLogging('error', 'PUSH-MANY', 'cif', req.body, 'cif', errors.array());
     return res.status(400).json({ errors: errors.array() });
   }
   
   let external_resource_array = [];
-  let msgs = req.body.messages;
   let instance_push_id = req.body.instance_id;
   let authToken = req.headers['authorization'];
-  let brand_id = req.body.brand_id;
-  let customer = req.body.from;
-  goLogging('info', 'PUSH-MANY', req.body.from.id, req.body, req.body.from.username, `${instance_push_id}/${authToken}`);
+  let msgs = req.body.messages;
+  // goLogging('info', 'PUSH-MANY', req.body.from.id, req.body, req.body.from.username, `${instance_push_id}/${authToken}`);
   await msgs.slice().reverse().forEach(async msg => {
     var msgObj = await cifhelper.cifBulkPayload(msg, brand_id, USER_TICKET_ID, customer);
     external_resource_array.push(msgObj);
-    // console.log(msgObj)
     msgObj = {};
   });
-  // console.log(external_resource_array)
 
-  // res.status(200).send(service.pushConversationPayload(ZD_PUSH_API, authToken, instance_push_id, external_resource_array))
-  axios(service.pushConversationPayload(ZD_PUSH_API, authToken, instance_push_id, external_resource_array))
-  .then((response) => {
-    res.status(200).send(response.data)
-  }, (error) => {
-    // console.log(error)
-    goLogging('error', 'PUSH-MANY', req.body.from.id, error, req.body.from.username, `${req.body.instance_id}/${authToken}`);
-    res.status(error.response.status).send({error: error})
-  })
+  res.status(200).send(service.pushConversationPayload(ZD_PUSH_API, authToken, instance_push_id, external_resource_array))
+  // axios(service.pushConversationPayload(ZD_PUSH_API, authToken, instance_push_id, external_resource_array))
+  // .then((response) => {
+  //   res.status(200).send(response.data)
+  // }, (error) => {
+  //   // console.log(error)
+  //   goLogging('error', 'PUSH-MANY', req.body.from.id, error, req.body.from.username, `${req.body.instance_id}/${authToken}`);
+  //   res.status(error.response.status).send({error: error})
+  // })
 })
 
-router.post('/push', body('brand_id').exists(),
-  body('message.from.id').exists(),
-  body('message.from.username').exists(),
-  body('message.id').exists() , 
-  body('instance_id').exists() ,
-  header('authorization').exists(),
+router.post('/push', body('brand_id').exists(), 
+msgIdExist(), tokenExist(), customerIdExist(), 
+instanceIdExist(), customerNameExist(),
 async function(req, res, next) {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    goLogging('error', 'PUSH', 'cif', req.body, 'cif', errors.array());
+    // goLogging('error', 'PUSH', 'cif', req.body, 'cif', errors.array());
     return res.status(400).json({ errors: errors.array() });
   }
   
   let external_resource_array = [];
-  let msg = req.body.message;
+  // let msg = req.body.message;
   let authToken = req.headers['authorization'];
   
-  goLogging('info', 'PUSH', req.body.message.from.id, req.body, req.body.message.from.username, `${req.body.instance_id}/${authToken}`);
+  // goLogging('info', 'PUSH', req.body.message.from.id, req.body, req.body.message.from.username, `${req.body.instance_id}/${authToken}`);
 
-	var msgObj = await cifhelper.cifPayload(msg, req.body.brand_id, USER_TICKET_ID)
+	var msgObj = await cifhelper.cifPayload(req.body, USER_TICKET_ID)
 	external_resource_array.push(msgObj);
   msgObj = {};
-  // res.status(200).send(service.pushConversationPayload(ZD_PUSH_API, authToken, req.body.instance_id, external_resource_array))
-  axios(service.pushConversationPayload(ZD_PUSH_API, authToken, req.body.instance_id, external_resource_array))
-  .then((response) => {
-    res.status(200).send(response.data)
-  }, (error) => {
-    // console.log(JSON.stringify(error))
-    goLogging('error', 'PUSH', req.body.message.from.id, error, req.body.message.from.username, `${req.body.instance_id}/${authToken}`);
-    res.status(error.response.status).send({error: error})
-  })
+  res.status(200).send(service.pushConversationPayload(ZD_PUSH_API, authToken, req.body.instance_id, external_resource_array))
+  // axios(service.pushConversationPayload(ZD_PUSH_API, authToken, req.body.instance_id, external_resource_array))
+  // .then((response) => {
+  //   res.status(200).send(response.data)
+  // }, (error) => {
+  //   // console.log(JSON.stringify(error))
+  //   goLogging('error', 'PUSH', req.body.message.from.id, error, req.body.message.from.username, `${req.body.instance_id}/${authToken}`);
+  //   res.status(error.response.status).send({error: error})
+  // })
 })
 
 function goLogging(status, process, to, message, name, pushtoken) {
