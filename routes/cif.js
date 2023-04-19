@@ -150,7 +150,7 @@ router.post('/channelback', function(req, res, next) {
       }
     }, (error) => {
     	console.log('error')
-      console.log(error)
+      console.log(JSON.stringify(error))
       goLogging('error', 'CHANNELBACK', userid, error.response, username, '0/0');
       if (i == 0) {
         res.status(500).send({});
