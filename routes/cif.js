@@ -229,6 +229,7 @@ async function(req, res, next) {
 
 router.post('/push', body('brand_id').exists(),
   body('message.from.id').exists(),
+  body('message.type').exists(),
   body('message.from.username').exists(),
   body('message.id').exists() , 
   body('instance_id').exists() ,
