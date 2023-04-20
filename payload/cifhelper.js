@@ -113,6 +113,9 @@ const cifPayload = async function (msg, brand_id, user_ticket_id) {
   }
 
   if (msg_type == 'text') {
+    if (msg_content == '') {
+        msg_content = '- empty message -'
+    }
     msgObj['message'] = msg_content;
   } else {
     let ext = mime.extension(mime.lookup(msg_content))

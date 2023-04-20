@@ -112,6 +112,7 @@ router.post('/channelback', function(req, res, next) {
   let brandid = req.body.thread_id.split('-')[3];
   let msgid = `unitel-ticket-${userid}-channelback-${Date.now()}`;
   var cb_arr = [];
+  goLogging('info', 'CHANNELBACK', userid, req.body, username, '0/0');
   if (req.body.message) {
     var textPayload = service.pushBackPayload(
       EXT_CHAT_ENDPOINT, EXT_CHAT_TOKEN, 
@@ -133,7 +134,6 @@ router.post('/channelback', function(req, res, next) {
 
   cb_arr.forEach((cb, i) => {
     axios(cb).then((response) => {
-      goLogging('info', 'CHANNELBACK', userid, cb.data, username, '0/0');
       if (response.status == 200) {
         if (response.data.status == 'failed') {
           if (response.data.response == 'Unauthorized') {
@@ -153,7 +153,7 @@ router.post('/channelback', function(req, res, next) {
       console.log(JSON.stringify(error))
       goLogging('error', 'CHANNELBACK', userid, error.response, username, '0/0');
       if (i == 0) {
-        res.status(500).send({});
+        res.status(503).send({});
       }
     })
   });
