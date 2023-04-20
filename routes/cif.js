@@ -112,7 +112,7 @@ router.post('/channelback', function(req, res, next) {
   let brandid = req.body.thread_id.split('-')[3];
   let msgid = `unitel-ticket-${userid}-channelback-${Date.now()}`;
   var cb_arr = [];
-  goLogging('info', 'CHANNELBACK', userid, req.body, username, '0/0');
+  goLogging(`cif-unitel-${userid}`, 'info', 'CHANNELBACK', userid, req.body, username, '0/0');
   if (req.body.message) {
     var textPayload = service.pushBackPayload(
       EXT_CHAT_ENDPOINT, EXT_CHAT_TOKEN, 
@@ -137,7 +137,7 @@ router.post('/channelback', function(req, res, next) {
       if (response.status == 200) {
         if (response.data.status == 'failed') {
           if (response.data.response == 'Unauthorized') {
-            goLogging('error', 'CHANNELBACK-401', userid, req.body, username, '0/0');
+            goLogging(`cif-unitel-${userid}`, 'error', 'CHANNELBACK-401', userid, req.body, username, '0/0');
             res.status(401).send(response.data);
           }
         }
@@ -151,7 +151,7 @@ router.post('/channelback', function(req, res, next) {
     }, (error) => {
     	console.log('error')
       console.log(JSON.stringify(error))
-      goLogging('error', 'CHANNELBACK', userid, error.response, username, '0/0');
+      goLogging(`cif-unitel-${userid}`, 'error', 'CHANNELBACK', userid, error.response, username, '0/0');
       if (i == 0) {
         res.status(503).send({});
       }
@@ -197,7 +197,7 @@ async function(req, res, next) {
   
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    goLogging('error', 'PUSH-MANY', 'cif', req.body, 'cif', errors.array());
+    goLogging(`0/0`, 'error', 'PUSH-MANY', 'cif', req.body, 'cif', errors.array());
     return res.status(400).json({ errors: errors.array() });
   }
   
@@ -207,7 +207,7 @@ async function(req, res, next) {
   let authToken = req.headers['authorization'];
   let brand_id = req.body.brand_id;
   let customer = req.body.from;
-  goLogging('info', 'PUSH-MANY', req.body.from.id, req.body, req.body.from.username, `${instance_push_id}/${authToken}`);
+  goLogging(`cif-unitel-${customer.id}`, 'info', 'PUSH-MANY', customer.id, req.body, customer.username, `${instance_push_id}/${authToken}`);
   await msgs.slice().reverse().forEach(async msg => {
     var msgObj = await cifhelper.cifBulkPayload(msg, brand_id, USER_TICKET_ID, customer);
     external_resource_array.push(msgObj);
@@ -222,7 +222,7 @@ async function(req, res, next) {
     res.status(200).send(response.data)
   }, (error) => {
     // console.log(error)
-    goLogging('error', 'PUSH-MANY', req.body.from.id, error, req.body.from.username, `${req.body.instance_id}/${authToken}`);
+    goLogging(`cif-unitel-${customer.id}`, 'error', 'PUSH-MANY', customer.id, error, customer.username, `${req.body.instance_id}/${authToken}`);
     res.status(error.response.status).send({error: error})
   })
 })
@@ -237,15 +237,17 @@ router.post('/push', body('brand_id').exists(),
 async function(req, res, next) {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    goLogging('error', 'PUSH', 'cif', req.body, 'cif', errors.array());
+    goLogging('0/0', 'error', 'PUSH', 'cif', req.body, 'cif', errors.array());
     return res.status(400).json({ errors: errors.array() });
   }
   
   let external_resource_array = [];
   let msg = req.body.message;
   let authToken = req.headers['authorization'];
+  let username = req.body.message.from.username;
+  let userid = req.body.message.from.id;
   
-  goLogging('info', 'PUSH', req.body.message.from.id, req.body, req.body.message.from.username, `${req.body.instance_id}/${authToken}`);
+  goLogging(`cif-unitel-${userid}`,'info', 'PUSH', userid, req.body, username, `${req.body.instance_id}/${authToken}`);
 
 	var msgObj = await cifhelper.cifPayload(msg, req.body.brand_id, USER_TICKET_ID)
 	external_resource_array.push(msgObj);
@@ -256,16 +258,17 @@ async function(req, res, next) {
     res.status(200).send(response.data)
   }, (error) => {
     // console.log(JSON.stringify(error))
-    goLogging('error', 'PUSH', req.body.message.from.id, error, req.body.message.from.username, `${req.body.instance_id}/${authToken}`);
+    goLogging(`cif-unitel-${userid}`, 'error', 'PUSH', userid, error, req.body.message.from.username, `${req.body.instance_id}/${authToken}`);
     res.status(error.response.status).send({error: error})
   })
 })
 
-function goLogging(status, process, to, message, name, pushtoken) {
+function goLogging(id, status, process, to, message, name, pushtoken) {
   winston.log(status, {
     process: process,
     status: status,
     to: to,
+    log_id: id,
     push_id_token: pushtoken,
     username: name,
     message: message,
