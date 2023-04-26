@@ -20,6 +20,16 @@ var { Loggly } = require('winston-loggly-bulk');
 let clientName = 'UNITEL-PROD'
 
 winston.add(new Loggly({
+  levels: {
+    'info': 0,
+    'ok': 1,
+    'error': 2
+  },
+  colors: {
+    'info': 'yellow',
+    'ok': 'green',
+    'error': 'red'
+  },
   token: LOGGLY_TOKEN,
   subdomain: "diastowo",
   tags: ["cif"],
