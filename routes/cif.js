@@ -142,7 +142,7 @@ router.post('/channelback', function(req, res, next) {
           }
         }
         if (i == 0) {
-          // goLogging('info', 'CHANNELBACK', userid, response.data, username, '0/0');
+          goLogging(`cif-unitel-${userid}`, 'ok', 'CHANNELBACK', userid, {req: req.body.request_unique_identifier, res: response.data}, username, '0/0');
           res.status(200).send({
             external_id: msgid
           });	
@@ -268,7 +268,7 @@ function goLogging(id, status, process, to, message, name, pushtoken) {
     process: process,
     status: status,
     to: to,
-    log_id: id,
+    cif_log_id: id,
     push_id_token: pushtoken,
     username: name,
     message: message,
