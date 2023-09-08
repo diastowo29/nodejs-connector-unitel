@@ -20,16 +20,6 @@ var { Loggly } = require('winston-loggly-bulk');
 let clientName = 'UNITEL-PROD'
 
 winston.add(new Loggly({
-  levels: {
-    'info': 0,
-    'ok': 1,
-    'error': 2
-  },
-  colors: {
-    'info': 'yellow',
-    'ok': 'green',
-    'error': 'red'
-  },
   token: LOGGLY_TOKEN,
   subdomain: "diastowo",
   tags: ["cif"],
@@ -152,7 +142,7 @@ router.post('/channelback', function(req, res, next) {
           }
         }
         if (i == 0) {
-          goLogging(`cif-unitel-${userid}`, 'ok', 'CHANNELBACK', userid, {req: req.body.request_unique_identifier, res: response.data}, username, '0/0');
+          goLogging(`cif-unitel-${userid}`, 'info', 'CHANNELBACK', userid, {req: req.body.request_unique_identifier, res: response.data}, username, '0/0');
           res.status(200).send({
             external_id: msgid
           });	
@@ -210,31 +200,36 @@ async function(req, res, next) {
     goLogging(`0/0`, 'error', 'PUSH-MANY', 'cif', req.body, 'cif', errors.array());
     return res.status(400).json({ errors: errors.array() });
   }
-  
-  let external_resource_array = [];
-  let msgs = req.body.messages;
-  let instance_push_id = req.body.instance_id;
-  let authToken = req.headers['authorization'];
-  let brand_id = req.body.brand_id;
-  let customer = req.body.from;
-  goLogging(`cif-unitel-${customer.id}`, 'info', 'PUSH-MANY', customer.id, req.body, customer.username, `${instance_push_id}/${authToken}`);
-  await msgs.slice().reverse().forEach(async msg => {
-    var msgObj = await cifhelper.cifBulkPayload(msg, brand_id, USER_TICKET_ID, customer);
-    external_resource_array.push(msgObj);
-    // console.log(msgObj)
-    msgObj = {};
-  });
-  // console.log(external_resource_array)
 
-  // res.status(200).send(service.pushConversationPayload(ZD_PUSH_API, authToken, instance_push_id, external_resource_array))
-  axios(service.pushConversationPayload(ZD_PUSH_API, authToken, instance_push_id, external_resource_array))
-  .then((response) => {
-    res.status(200).send(response.data)
-  }, (error) => {
-    // console.log(error)
-    goLogging(`cif-unitel-${customer.id}`, 'error', 'PUSH-MANY', customer.id, error, customer.username, `${req.body.instance_id}/${authToken}`);
-    res.status(error.response.status).send({error: error})
-  })
+  try {
+    let external_resource_array = [];
+    let msgs = req.body.messages;
+    let instance_push_id = req.body.instance_id;
+    let authToken = req.headers['authorization'];
+    let brand_id = req.body.brand_id;
+    let customer = req.body.from;
+    goLogging(`cif-unitel-${customer.id}`, 'info', 'PUSH-MANY', customer.id, req.body, customer.username, `${instance_push_id}/${authToken}`);
+    await msgs.slice().reverse().forEach(async msg => {
+      var msgObj = await cifhelper.cifBulkPayload(msg, brand_id, USER_TICKET_ID, customer);
+      external_resource_array.push(msgObj);
+      // console.log(msgObj)
+      msgObj = {};
+    });
+    // console.log(external_resource_array)
+  
+    // res.status(200).send(service.pushConversationPayload(ZD_PUSH_API, authToken, instance_push_id, external_resource_array))
+    axios(service.pushConversationPayload(ZD_PUSH_API, authToken, instance_push_id, external_resource_array))
+    .then((response) => {
+      res.status(200).send(response.data)
+    }, (error) => {
+      // console.log(error)
+      goLogging(`cif-unitel-${customer.id}`, 'error', 'PUSH-MANY', customer.id, error, customer.username, `${req.body.instance_id}/${authToken}`);
+      res.status(error.response.status).send({error: error})
+    })
+  } catch (e) {
+    goLogging(`cif-unitel-${userid}`, 'error', 'CRASH-PUSH-MANY', userid, e, req.body.message.from.username, `${req.body.instance_id}/${authToken}`);
+    res.status(500).send({error: e})
+  }
 })
 
 router.post('/push', body('brand_id').exists(),
@@ -250,27 +245,31 @@ async function(req, res, next) {
     goLogging('0/0', 'error', 'PUSH', 'cif', req.body, 'cif', errors.array());
     return res.status(400).json({ errors: errors.array() });
   }
+  try {
+    let external_resource_array = [];
+    let msg = req.body.message;
+    let authToken = req.headers['authorization'];
+    let username = req.body.message.from.username;
+    let userid = req.body.message.from.id;
+    
+    goLogging(`cif-unitel-${userid}`,'info', 'PUSH', userid, req.body, username, `${req.body.instance_id}/${authToken}`);
   
-  let external_resource_array = [];
-  let msg = req.body.message;
-  let authToken = req.headers['authorization'];
-  let username = req.body.message.from.username;
-  let userid = req.body.message.from.id;
-  
-  goLogging(`cif-unitel-${userid}`,'info', 'PUSH', userid, req.body, username, `${req.body.instance_id}/${authToken}`);
-
-	var msgObj = await cifhelper.cifPayload(msg, req.body.brand_id, USER_TICKET_ID)
-	external_resource_array.push(msgObj);
-  msgObj = {};
-  // res.status(200).send(service.pushConversationPayload(ZD_PUSH_API, authToken, req.body.instance_id, external_resource_array))
-  axios(service.pushConversationPayload(ZD_PUSH_API, authToken, req.body.instance_id, external_resource_array))
-  .then((response) => {
-    res.status(200).send(response.data)
-  }, (error) => {
-    // console.log(JSON.stringify(error))
-    goLogging(`cif-unitel-${userid}`, 'error', 'PUSH', userid, error, req.body.message.from.username, `${req.body.instance_id}/${authToken}`);
-    res.status(error.response.status).send({error: error})
-  })
+    var msgObj = await cifhelper.cifPayload(msg, req.body.brand_id, USER_TICKET_ID)
+    external_resource_array.push(msgObj);
+    msgObj = {};
+    // res.status(200).send(service.pushConversationPayload(ZD_PUSH_API, authToken, req.body.instance_id, external_resource_array))
+    axios(service.pushConversationPayload(ZD_PUSH_API, authToken, req.body.instance_id, external_resource_array))
+    .then((response) => {
+      res.status(200).send(response.data)
+    }, (error) => {
+      // console.log(JSON.stringify(error))
+      goLogging(`cif-unitel-${userid}`, 'error', 'PUSH', userid, error, req.body.message.from.username, `${req.body.instance_id}/${authToken}`);
+      res.status(error.response.status).send({error: error})
+    })
+  } catch (e) {
+    goLogging(`cif-unitel-${userid}`, 'error', 'CRASH-PUSH', userid, e, req.body.message.from.username, `${req.body.instance_id}/${authToken}`);
+    res.status(500).send({error: e})
+  }
 })
 
 function goLogging(id, status, process, to, message, name, pushtoken) {
