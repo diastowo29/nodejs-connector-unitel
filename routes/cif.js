@@ -17,7 +17,7 @@ const LOGGLY_TOKEN = process.env.LOGGLY_TOKEN || '25cbd41e-e0a1-4289-babf-762a2e
 const USER_TICKET_ID = process.env.USER_TICKET_ID || '6681549599887';
 var winston = require('winston');
 var { Loggly } = require('winston-loggly-bulk');
-let clientName = 'UNITEL-PROD'
+let clientName = 'UNITEL-DEV'
 
 winston.add(new Loggly({
   token: LOGGLY_TOKEN,
@@ -66,39 +66,33 @@ router.get('/admin', function(req, res, next) {
 })
 
 router.post('/admin', function(req, res, next) {
-  let instance_push_id = req.body.instance_push_id
-  let zd_token = req.body.zendesk_access_token
-  let locale = req.body.locale
-  let subdomain = req.body.subdomain
-  let return_url = req.body.return_url
-
   res.render('admin', {
     title: 'CIF Admin',
-    return_url: return_url,
-    instance_push_id: instance_push_id,
-    zendesk_access_token: zd_token,
-    locale: locale,
-    subdomain: subdomain
+    return_url: req.body.return_url,
+    instance_push_id: req.body.instance_push_id,
+    zendesk_access_token: req.body.zendesk_access_token,
+    locale: req.body.locale,
+    subdomain: req.body.subdomain
   });
 })
 
 router.post('/add', function(req, res, next) {
 	let metadata = {};
-    metadata['instance_push_id'] = req.body.instance_push_id;
-    metadata['zendesk_access_token'] = req.body.zendesk_access_token;
-    metadata['subdomain'] = req.body.subdomain;
-    metadata['locale'] = req.body.locale;
-    metadata['return_url'] = req.body.return_url;
-    metadata['bot_name'] = req.body.bot_name;
+  metadata['instance_push_id'] = req.body.instance_push_id;
+  metadata['zendesk_access_token'] = req.body.zendesk_access_token;
+  metadata['subdomain'] = req.body.subdomain;
+  metadata['locale'] = req.body.locale;
+  metadata['return_url'] = req.body.return_url;
+  metadata['bot_name'] = req.body.bot_name;
 
-    let name = "Unitel Live Chat : " + req.body.bot_name
-    res.render('confirm', {
-        title: 'CIF Confirmation Page',
-        return_url: req.body.return_url,
-        metadata: JSON.stringify(metadata),
-        state: JSON.stringify({}),
-        name: name
-    });
+  let name = "Unitel Live Chat : " + req.body.bot_name
+  res.render('confirm', {
+      title: 'CIF Confirmation Page',
+      return_url: req.body.return_url,
+      metadata: JSON.stringify(metadata),
+      state: JSON.stringify({}),
+      name: name
+  });
 })
 
 router.post('/pull', function(req, res, next) {
