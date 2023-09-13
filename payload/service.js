@@ -30,7 +30,25 @@ const pushBackPayload = function (replyBackApi, chatToken, messagePayload) {
     return replybackPayload;
 }
 
+const reportChannelbackError = function (pushApi, cifToken, pushId, extId, desc) {
+    const cifPayload = {
+        method: 'POST',
+        url: pushApi,
+        headers: {
+            'Authorization': cifToken
+        },
+        data: {
+            instance_push_id: pushId,
+            external_id: extId,
+            description: desc
+        }
+    }
+
+    return cifPayload;
+}
+
 module.exports = {
     pushConversationPayload,
-    pushBackPayload
+    pushBackPayload,
+    reportChannelbackError
 }

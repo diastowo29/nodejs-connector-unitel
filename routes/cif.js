@@ -1,23 +1,21 @@
 var express = require('express');
 var router = express.Router();
 const service = require('../payload/service');
-const unitel = require('../payload/unitel');
-const cifhelper = require('../payload/cifhelper')
 const axios = require('axios');
-const axiosRetry = require('axios-retry');
-const fs = require("fs");
 var request = require('request');
 const { body, header, validationResult } = require('express-validator');
 let workQueue = require('../config/redis.config');
-
-const EXT_CHAT_HOST = process.env.EXT_CHAT_HOST || 'xxx';
-const EXT_CHAT_ENDPOINT = `${EXT_CHAT_HOST}`;
-const EXT_CHAT_TOKEN = process.env.EXT_CHAT_TOKEN || 'xxx';
 const LOGGLY_TOKEN = process.env.LOGGLY_TOKEN || '25cbd41e-e0a1-4289-babf-762a2e6967b6';
+let enableLogging = process.env.ENABLE_LOGGING || false;
+const ZD_HOST = process.env.ZD_HOST || 'https://unitelgroup1694589998.zendesk.com'
 
 var winston = require('winston');
 var { Loggly } = require('winston-loggly-bulk');
 let clientName = 'UNITEL-DEV';
+
+const ZD_CB_ERR_API = ZD_HOST + '/api/v2/any_channel/channelback/report_error';
+
+let dev = process.argv[2]
 
 winston.add(new Loggly({
   token: LOGGLY_TOKEN,
@@ -25,6 +23,36 @@ winston.add(new Loggly({
   tags: ["cif"],
   json: true
 }));
+
+workQueue.on('global:failed', function (job, error) {
+  workQueue.getJob(job).then(function(thisJob) {
+    console.log('FAILED:', job)
+    if (!dev) {
+      try {
+        if (thisJob.data.type != 'channelback') {
+          let userId = thisJob.data.body.message.from.id;
+          let userName = thisJob.data.body.message.username;
+          let logId = `cif-unitel-${userId}`
+          goLogging(logId, 'error', `PUSH-${thisJob.data.type}`, userId, thisJob.data.body, userName, thisJob.data.auth);
+        } else {
+          let recipient = Buffer.from(thisJob.data.body.recipient_id, 'base64').toString('ascii');
+          let userId = recipient.split('::')[2];
+          let msgId = thisJob.data.msgId;;
+          let metadata = JSON.parse(thisJob.data.body.metadata)
+          let logId = `cif-unitel-${userId}`
+          goLogging(logId, 'error', thisJob.data.type, userId, thisJob.data.body, userId, metadata.zendesk_access_token);
+          axios(service.reportChannelbackError(ZD_CB_ERR_API, metadata.zendesk_access_token, metadata.instance_push_id, msgId, thisJob.failedReason));
+        }
+      } catch (e) {
+        goLogging('0/0', 'error', `CRASH-QUEUE-EVENT`, 'USER-00', thisJob.data.body, 'USER-00', thisJob.data.auth);
+      }
+    }
+  })
+})
+
+workQueue.on('global:completed', function (job, result) {
+  console.log('completed:', job)
+})
 
 // axiosRetry(axios, {
 //   retries: 3,
@@ -36,23 +64,28 @@ winston.add(new Loggly({
 //   }
 // })
 
-/* GET home page. */
 router.get('/manifest', function(req, res, next) {
-    let host = req.hostname;
-    res.send({
-      name: "Unitel Chat",
-      id: "trees-unitel-chat-integration",
-      author: "Trees Solutions",
-      version: "v1",
-      push_client_id: "zd_trees_integration",
-      channelback_files: true,
-      create_followup_tickets: false,
-      urls: {
-        admin_ui: "https://" + host + "/api/v1/cif/admin",
-        channelback_url: "https://" + host + "/api/v1/cif/channelback"
-      }
-    });
+  let host = req.hostname;
+  res.send({
+    name: "Unitel Chat",
+    id: "trees-unitel-chat-integration",
+    author: "Trees Solutions",
+    version: "v1",
+    push_client_id: "zd_trees_integration",
+    channelback_files: true,
+    create_followup_tickets: false,
+    urls: {
+      admin_ui: "https://" + host + "/api/v1/cif/admin",
+      channelback_url: "https://" + host + "/api/v1/cif/channelback"
+    }
+  });
 });
+
+router.get('/job', function(req, res, next) {
+  workQueue.getJob(req.query.job_id).then(function(thisJob) {
+    res.status(200).send(thisJob == null ? {} : thisJob)
+  })
+})
 
 router.get('/admin', function(req, res, next) {
   res.render('admin', {
@@ -87,11 +120,11 @@ router.post('/add', function(req, res, next) {
 
   let name = "Unitel Live Chat : " + req.body.bot_name;
   res.render('confirm', {
-      title: 'CIF Confirmation Page',
-      return_url: req.body.return_url,
-      metadata: JSON.stringify(metadata),
-      state: JSON.stringify({}),
-      name: name
+    title: 'CIF Confirmation Page',
+    return_url: req.body.return_url,
+    metadata: JSON.stringify(metadata),
+    state: JSON.stringify({}),
+    name: name
   });
 })
 
@@ -100,57 +133,19 @@ router.post('/pull', function(req, res, next) {
 })
 
 router.post('/channelback', function(req, res, next) {
-	let recipient = Buffer.from(req.body.recipient_id, 'base64').toString('ascii');
-  let username = recipient.split('::')[1];
-  let userid = recipient.split('::')[2];
-  let brandid = req.body.thread_id.split('-')[3];
-  let msgid = `unitel-ticket-${userid}-channelback-${Date.now()}`;
-  var cb_arr = [];
-  // goLogging(`cif-unitel-${userid}`, 'info', 'CHANNELBACK', userid, req.body, username, '0/0');
-  if (req.body.message) {
-    var textPayload = service.pushBackPayload(
-      EXT_CHAT_ENDPOINT, EXT_CHAT_TOKEN, 
-      unitel.replyPayload(msgid, 'text', req.body.message, brandid, username, userid))
-    cb_arr.push(textPayload)
-  }
-  if (req.body['file_urls[]']) {
-    if (!Array.isArray(req.body['file_urls[]'])) {
-      req.body['file_urls[]'] = [req.body['file_urls[]']]
-    }
-    req.body['file_urls[]'].forEach(zdFile => {
-      let fileType = cifhelper.fileExtValidator(zdFile);
-      var filePayload = service.pushBackPayload(
-        EXT_CHAT_ENDPOINT, EXT_CHAT_TOKEN, 
-        unitel.replyPayload(msgid, fileType, zdFile, brandid, username, userid))
-      cb_arr.push(filePayload)
-    });
-  }
+  try {
+    let recipient = Buffer.from(req.query.recipient_id, 'base64').toString('ascii');
+    let userid = recipient.split('::')[2];
+    let msgId = `unitel-ticket-${userid}-channelback-${Date.now()}`;
 
-  cb_arr.forEach((cb, i) => {
-    axios(cb).then((response) => {
-      if (response.status == 200) {
-        if (response.data.status == 'failed') {
-          if (response.data.response == 'Unauthorized') {
-            // goLogging(`cif-unitel-${userid}`, 'error', 'CHANNELBACK-401', userid, req.body, username, '0/0');
-            res.status(401).send(response.data);
-          }
-        }
-        if (i == 0) {
-          // goLogging(`cif-unitel-${userid}`, 'info', 'CHANNELBACK', userid, {req: req.body.request_unique_identifier, res: response.data}, username, '0/0');
-          res.status(200).send({
-            external_id: msgid
-          });	
-        }
-      }
-    }, (error) => {
-    	console.log('error')
-      console.log(JSON.stringify(error))
-      // goLogging(`cif-unitel-${userid}`, 'error', 'CHANNELBACK', userid, error.response, username, '0/0');
-      if (i == 0) {
-        res.status(503).send({});
-      }
-    })
-  });
+    workQueue.add({body: req.query, type: 'channelback', msgId: msgId});
+    res.status(200).send({
+      external_id: msgId
+    });
+  } catch (e) {
+    // goLogging(`cif-unitel-${userid}`, 'error', 'CRASH-PUSH-MANY', userid, e, req.body.message.from.username, `${req.body.instance_id}/${authToken}`);
+    res.status(500).send({error: e});
+  }
 })
 
 router.get('/clickthrough', function(req, res, next) {
@@ -171,20 +166,20 @@ router.post('/push_many', body('brand_id').exists(),
   body('from.username').exists(),
   body('instance_id').exists(),
   header('authorization').exists(),
-function(req, res, next) {
+async function(req, res, next) {
   let authToken = req.headers['authorization'];
   
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    // goLogging(`0/0`, 'error', 'PUSH-MANY', 'cif', req.body, 'cif', errors.array());
+    goLogging(`0/0`, 'error', 'PUSH-MANY', 'cif', req.body, 'cif', errors.array());
     return res.status(400).json({ errors: errors.array() });
   }
 
   try {
-    workQueue.add({body: req.body, header: req.headers, type: 'bulk'});
-    res.status(200).send({status: 'OK'});
+    let job = await workQueue.add({body: req.body, auth: req.headers['authorization'], type: 'bulk'});
+    res.status(200).send({status: 'OK', job: { id: job.id }});
   } catch (e) {
-    // goLogging(`cif-unitel-${userid}`, 'error', 'CRASH-PUSH-MANY', userid, e, req.body.message.from.username, `${req.body.instance_id}/${authToken}`);
+    goLogging(`cif-unitel-${userid}`, 'error', 'CRASH-PUSH-MANY', userid, e, req.body.message.from.username, `${req.body.instance_id}/${authToken}`);
     res.status(500).send({error: e});
   }
 })
@@ -196,35 +191,37 @@ router.post('/push', body('brand_id').exists(),
   body('message.id').exists() , 
   body('instance_id').exists() ,
   header('authorization').exists(),
-function(req, res, next) {
+async function(req, res, next) {
   let authToken = req.headers['authorization'];
   let userid = req.body.message.from.id;
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    // goLogging('0/0', 'error', 'PUSH', 'cif', req.body, 'cif', errors.array());
+    goLogging('0/0', 'error', 'PUSH', 'cif', req.body, 'cif', errors.array());
     return res.status(400).json({ errors: errors.array() });
   }
 
   try {
-    workQueue.add({body: req.body, header: req.headers, type: 'single'});
-    res.status(200).send({status: 'OK'})
+    let job = await workQueue.add({body: req.body, auth: req.headers['authorization'], type: 'single'});
+    res.status(200).send({status: 'OK', job: { id: job.id }});
   } catch (e) {
-    // goLogging(`cif-unitel-${userid}`, 'error', 'CRASH-PUSH', userid, e, req.body.message.from.username, `${req.body.instance_id}/${authToken}`);
+    goLogging(`cif-unitel-${userid}`, 'error', 'CRASH-PUSH', userid, e, req.body.message.from.username, `${req.body.instance_id}/${authToken}`);
     res.status(500).send({error: e})
   }
 })
 
-// function goLogging(id, status, process, to, message, name, pushtoken) {
-//   winston.log(status, {
-//     process: process,
-//     status: status,
-//     to: to,
-//     cif_log_id: id,
-//     push_id_token: pushtoken,
-//     username: name,
-//     message: message,
-//     client: clientName
-//   });
-// }
+function goLogging(id, status, process, to, message, name, pushtoken) {
+  if (enableLogging) {
+    winston.log(status, {
+      process: process,
+      status: status,
+      to: to,
+      cif_log_id: id,
+      push_id_token: pushtoken,
+      username: name,
+      message: message,
+      client: clientName
+    });
+  }
+}
 
 module.exports = router;

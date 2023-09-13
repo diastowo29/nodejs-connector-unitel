@@ -6,5 +6,4 @@ let workQueue = new Queue('sendMessage', REDIS_URL, {
     }
 });
 
-
 module.exports=workQueue
