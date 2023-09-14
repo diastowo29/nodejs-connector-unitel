@@ -32,6 +32,7 @@ function start() {
         } else {
             processChannelback(job.data, done);
         }
+        workQueue.close();
     });
 }
 
