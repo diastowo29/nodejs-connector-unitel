@@ -108,8 +108,7 @@ async function processChannelback (jobData, done) {
                 cb_arr.push(filePayload)
             });
         }
-        done(null, { response: cb_arr})
-        /* cb_arr.forEach((cb, i) => {
+        cb_arr.forEach((cb, i) => {
             axios(cb).then((response) => {
                 if (response.status == 200) {
                     if (response.data.status == 'failed') {
@@ -121,7 +120,7 @@ async function processChannelback (jobData, done) {
             }, (error) => {
                 done(new Error(e))
             })
-        }); */
+        });
     } catch (e) {
         done(new Error(e))
     }
