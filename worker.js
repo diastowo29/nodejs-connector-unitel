@@ -10,7 +10,8 @@ const EXT_CHAT_HOST = process.env.EXT_CHAT_HOST || 'xxx';
 const EXT_CHAT_ENDPOINT = `${EXT_CHAT_HOST}`;
 const EXT_CHAT_TOKEN = process.env.EXT_CHAT_TOKEN || 'xxx';
 
-let maxJob = 1;
+let maxJob = 2;
+let workers = maxJob;
 let maxJobsPerWorker = maxJob;
 // let workQueue = require('./config/redis.config')
 let Queue = require('bull');
@@ -21,8 +22,6 @@ let workQueue = new Queue('sendMessage', REDIS_URL, {
     }
 });
 
-module.exports=workQueue
-
 function start() {
     workQueue.process(maxJobsPerWorker, async (job, done) => {
         if (job.data.type == 'single') {
@@ -32,7 +31,6 @@ function start() {
         } else {
             processChannelback(job.data, done);
         }
-        workQueue.close();
     });
 }
 
@@ -128,4 +126,4 @@ async function processChannelback (jobData, done) {
     }
 }
 
-throng({ maxJob, start });
+throng({ workers, start });
