@@ -45,7 +45,8 @@ async function processMessage (jobData, done) {
         msgObj = {};
         let pushPayload = service.pushConversationPayload(ZD_PUSH_API, authToken, jobData.body.instance_id, external_resource_array)
         axios(pushPayload).then((response) => {
-            done(null, {response: response});
+            console.log(response.data)
+            done(null, {response: response.data});
         }, (error) => {
             done(new Error(error));
         });

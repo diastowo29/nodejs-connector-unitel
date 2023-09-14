@@ -41,14 +41,14 @@ workQueue.on('global:failed', function (job, error) {
           let userId = thisJob.data.body.message.from.id;
           let userName = thisJob.data.body.message.username;
           let logId = `cif-unitel-${userId}`
-          goLogging(logId, 'error', `PUSH-${thisJob.data.type}`, userId, {body: thisJob.data.body, error: thisJob.failedReason}, userName, thisJob.data.auth);
+          goLogging(logId, 'error', `PUSH-${thisJob.data.type}`, userId, { job:thisJob.id, body: thisJob.data.body, error: thisJob.failedReason}, userName, thisJob.data.auth);
         } else {
           let recipient = Buffer.from(thisJob.data.body.recipient_id, 'base64').toString('ascii');
           let userId = recipient.split('::')[2];
           let msgId = thisJob.data.msgId;;
           let metadata = JSON.parse(thisJob.data.body.metadata)
           let logId = `cif-unitel-${userId}`
-          goLogging(logId, 'error', thisJob.data.type, userId, {body: thisJob.data.body, error: thisJob.failedReason}, userId, metadata.zendesk_access_token);
+          goLogging(logId, 'error', thisJob.data.type, userId, { job:thisJob.id, body: thisJob.data.body, error: thisJob.failedReason}, userId, metadata.zendesk_access_token);
           axios(service.reportChannelbackError(ZD_CB_ERR_API, metadata.zendesk_access_token, metadata.instance_push_id, msgId, thisJob.failedReason));
         }
       } catch (e) {
