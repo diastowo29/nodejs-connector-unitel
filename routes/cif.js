@@ -50,10 +50,6 @@ workQueue.on('global:failed', function (job, error) {
   })
 })
 
-workQueue.on('global:completed', function (job, result) {
-  console.log('completed:', job)
-})
-
 // axiosRetry(axios, {
 //   retries: 3,
 //   retryCondition: (e) => {
