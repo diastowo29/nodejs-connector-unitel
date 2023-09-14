@@ -12,7 +12,16 @@ const EXT_CHAT_TOKEN = process.env.EXT_CHAT_TOKEN || 'xxx';
 
 let maxJob = 20;
 let maxJobsPerWorker = maxJob;
-let workQueue = require('./config/redis.config')
+// let workQueue = require('./config/redis.config')
+let Queue = require('bull');
+let REDIS_URL = process.env.REDIS_URL || 'redis://127.0.0.1:6379';
+let workQueue = new Queue('sendMessage', REDIS_URL, {
+    settings: {
+        maxStalledCount: 0
+    }
+});
+
+module.exports=workQueue
 
 function start() {
     workQueue.process(maxJobsPerWorker, async (job, done) => {
