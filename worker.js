@@ -14,13 +14,6 @@ let maxJob = 5;
 let workers = maxJob;
 let maxJobsPerWorker = maxJob;
 let workQueue = require('./config/redis.config')
-// let Queue = require('bull');
-// let REDIS_URL = process.env.REDIS_URL || 'redis://127.0.0.1:6379';
-// let workQueue = new Queue('sendMessage', REDIS_URL, {
-//     settings: {
-//         maxStalledCount: 0
-//     }
-// });
 
 function start() {
     workQueue.process(maxJobsPerWorker, async (job, done) => {

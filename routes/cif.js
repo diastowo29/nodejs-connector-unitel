@@ -17,14 +17,6 @@ const ZD_CB_ERR_API = ZD_HOST + '/api/v2/any_channel/channelback/report_error';
 
 let dev = process.argv[2]
 
-// let Queue = require('bull');
-// let REDIS_URL = process.env.REDIS_URL || 'redis://127.0.0.1:6379';
-// let workQueue = new Queue('sendMessage', REDIS_URL, {
-//     settings: {
-//         maxStalledCount: 0
-//     }
-// });
-
 winston.add(new Loggly({
   token: LOGGLY_TOKEN,
   subdomain: "diastowo",
@@ -170,7 +162,7 @@ router.post('/push_many', body('brand_id').exists(),
   body('from.username').exists(),
   body('instance_id').exists(),
   header('authorization').exists(),
-async function(req, res, next) {
+function(req, res, next) {
   let authToken = req.headers['authorization'];
   
   const errors = validationResult(req);
@@ -180,8 +172,9 @@ async function(req, res, next) {
   }
 
   try {
-    let job = await workQueue.add({body: req.body, auth: req.headers['authorization'], type: 'bulk'});
-    res.status(200).send({status: 'OK', job: { id: job.id }});
+    workQueue.add({body: req.body, auth: req.headers['authorization'], type: 'bulk'});
+    // res.status(200).send({status: 'OK', job: { id: job.id }});
+    res.status(200).send({status: 'OK'});
   } catch (e) {
     goLogging(`cif-unitel-${userid}`, 'error', 'CRASH-PUSH-MANY', userid, e, req.body.message.from.username, `${req.body.instance_id}/${authToken}`);
     res.status(500).send({error: e});
