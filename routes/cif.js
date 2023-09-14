@@ -138,11 +138,11 @@ router.post('/pull', function(req, res, next) {
 
 router.post('/channelback', function(req, res, next) {
   try {
-    let recipient = Buffer.from(req.query.recipient_id, 'base64').toString('ascii');
+    let recipient = Buffer.from(req.body.recipient_id, 'base64').toString('ascii');
     let userid = recipient.split('::')[2];
     let msgId = `unitel-ticket-${userid}-channelback-${Date.now()}`;
 
-    workQueue.add({body: req.query, type: 'channelback', msgId: msgId});
+    workQueue.add({body: req.body, type: 'channelback', msgId: msgId});
     res.status(200).send({
       external_id: msgId
     });
