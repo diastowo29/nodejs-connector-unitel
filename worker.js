@@ -45,7 +45,6 @@ async function processMessage (jobData, done) {
         msgObj = {};
         let pushPayload = service.pushConversationPayload(ZD_PUSH_API, authToken, jobData.body.instance_id, external_resource_array)
         axios(pushPayload).then((response) => {
-            console.log(response.data)
             done(null, {response: response.data});
         }, (error) => {
             done(new Error(error));
@@ -72,7 +71,7 @@ async function processMessageBulk (jobData, done) {
         console.log(JSON.stringify(pushPayload))
         axios(service.pushConversationPayload(ZD_PUSH_API, authToken, instance_push_id, external_resource_array))
         .then((response) => {
-            done(null, response);
+            done(null, {response: response.data});
         }, (error) => {
             done(new Error(error));
         })
@@ -114,7 +113,7 @@ async function processChannelback (jobData, done) {
                     if (response.data.status == 'failed') {
                         done(new Error(response.data.response))
                     } else {
-                        done(null, response)
+                        done(null, { response: response.data })
                     }
                 }
             }, (error) => {
