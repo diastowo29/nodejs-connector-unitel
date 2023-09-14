@@ -45,6 +45,7 @@ async function processMessage (jobData, done) {
         msgObj = {};
         let pushPayload = service.pushConversationPayload(ZD_PUSH_API, authToken, jobData.body.instance_id, external_resource_array)
         axios(pushPayload).then((response) => {
+            console.log('done sending message')
             done(null, {response: response.data});
         }, (error) => {
             done(new Error(error));
@@ -68,9 +69,9 @@ async function processMessageBulk (jobData, done) {
             external_resource_array.push(msgObj);
         });
         let pushPayload = service.pushConversationPayload(ZD_PUSH_API, authToken, instance_push_id, external_resource_array);
-        console.log(JSON.stringify(pushPayload))
-        axios(service.pushConversationPayload(ZD_PUSH_API, authToken, instance_push_id, external_resource_array))
+        axios(pushPayload)
         .then((response) => {
+            console.log('done sending message')
             done(null, {response: response.data});
         }, (error) => {
             done(new Error(error));
@@ -107,7 +108,8 @@ async function processChannelback (jobData, done) {
                 cb_arr.push(filePayload)
             });
         }
-        cb_arr.forEach((cb, i) => {
+        done(null, { response: cb_arr})
+        /* cb_arr.forEach((cb, i) => {
             axios(cb).then((response) => {
                 if (response.status == 200) {
                     if (response.data.status == 'failed') {
@@ -119,7 +121,7 @@ async function processChannelback (jobData, done) {
             }, (error) => {
                 done(new Error(e))
             })
-        });
+        }); */
     } catch (e) {
         done(new Error(e))
     }
