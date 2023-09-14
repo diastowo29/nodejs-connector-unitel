@@ -11,7 +11,6 @@ const EXT_CHAT_ENDPOINT = `${EXT_CHAT_HOST}`;
 const EXT_CHAT_TOKEN = process.env.EXT_CHAT_TOKEN || 'xxx';
 
 let maxJob = 20;
-let workers = maxJob;
 let maxJobsPerWorker = maxJob;
 let workQueue = require('./config/redis.config')
 
@@ -119,4 +118,4 @@ async function processChannelback (jobData, done) {
     }
 }
 
-throng({ workers, start });
+throng({ maxJob, start });
