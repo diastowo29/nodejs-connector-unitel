@@ -4,7 +4,7 @@ const service = require('../payload/service');
 const axios = require('axios');
 var request = require('request');
 const { body, header, validationResult } = require('express-validator');
-let workQueue = require('../config/redis.config');
+// let workQueue = require('../config/redis.config');
 const LOGGLY_TOKEN = process.env.LOGGLY_TOKEN || '25cbd41e-e0a1-4289-babf-762a2e6967b6';
 let enableLogging = process.env.ENABLE_LOGGING || false;
 const ZD_HOST = process.env.ZD_HOST || 'https://unitelgroup1694589998.zendesk.com'
@@ -16,6 +16,14 @@ let clientName = 'UNITEL-DEV';
 const ZD_CB_ERR_API = ZD_HOST + '/api/v2/any_channel/channelback/report_error';
 
 let dev = process.argv[2]
+
+let Queue = require('bull');
+let REDIS_URL = process.env.REDIS_URL || 'redis://127.0.0.1:6379';
+let workQueue = new Queue('sendMessage', REDIS_URL, {
+    settings: {
+        maxStalledCount: 0
+    }
+});
 
 winston.add(new Loggly({
   token: LOGGLY_TOKEN,
