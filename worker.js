@@ -10,9 +10,8 @@ const EXT_CHAT_HOST = process.env.EXT_CHAT_HOST || 'xxx';
 const EXT_CHAT_ENDPOINT = `${EXT_CHAT_HOST}`;
 const EXT_CHAT_TOKEN = process.env.EXT_CHAT_TOKEN || 'xxx';
 
-let maxJob = 5;
-let workers = 1;
-let maxJobsPerWorker = maxJob;
+let workers = process.env.WEB_CONCURRENCY || 1;
+let maxJobsPerWorker = 20;
 let workQueue = require('./config/redis.config')
 
 function start() {
