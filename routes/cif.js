@@ -7,11 +7,11 @@ const { body, header, validationResult } = require('express-validator');
 let workQueue = require('../config/redis.config');
 const LOGGLY_TOKEN = process.env.LOGGLY_TOKEN || '25cbd41e-e0a1-4289-babf-762a2e6967b6';
 let enableLogging = process.env.ENABLE_LOGGING || false;
-const ZD_HOST = process.env.ZD_HOST || 'https://unitelgroup1694589998.zendesk.com'
+const ZD_HOST = process.env.ZD_HOST || 'https://unitelgroup.zendesk.com'
 
 var winston = require('winston');
 var { Loggly } = require('winston-loggly-bulk');
-let clientName = 'UNITEL-DEV';
+let clientName = 'UNITEL-PROD';
 
 const ZD_CB_ERR_API = ZD_HOST + '/api/v2/any_channel/channelback/report_error';
 
