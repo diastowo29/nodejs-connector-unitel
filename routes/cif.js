@@ -52,8 +52,8 @@ workQueue.on('global:failed', function (job, error) {
 
 router.get('/check', function(req, res, next) {
   res.status(200).send({
-    host: process.env.ZD_HOST,
-    ticket_id: process.env.USER_TICKET_ID,
+    host: process.env.ZD_HOST == undefined ? 'null': process.env.ZD_HOST,
+    ticket_fields_id: process.env.USER_TICKET_ID,
     ext_chat_host: process.env.EXT_CHAT_HOST,
     ext_chat_token: process.env.EXT_CHAT_TOKEN,
     loggly_token: process.env.LOGGLY_TOKEN,
