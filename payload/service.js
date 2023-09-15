@@ -1,4 +1,3 @@
-
 const pushConversationPayload = function (pushApi, cifToken, pushId, extResources) {
     const cifPayload = {
         method: 'POST',
