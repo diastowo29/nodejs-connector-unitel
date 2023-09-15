@@ -14,9 +14,6 @@ winston.add(new Loggly({
 }));
 
 const cifBulkPayload = async function (msg, brand_id, user_ticket_id, customer) {
-    // const replybackPayload = 
-    // return replybackPayload;
-
     var msgObj = {};
     let username = msg.author.username || msg.author.first_name;
     let ticket_external_id = `unitel-ticket-${msg.author.id}-${msg.id}-${Date.now()}`;
