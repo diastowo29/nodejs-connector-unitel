@@ -50,6 +50,17 @@ workQueue.on('global:failed', function (job, error) {
   })
 })
 
+router.get('/check', function(req, res, next) {
+  res.status(200).send({
+    host: process.env.ZD_HOST,
+    ticket_id: process.env.USER_TICKET_ID,
+    ext_chat_host: process.env.EXT_CHAT_HOST,
+    ext_chat_token: process.env.EXT_CHAT_TOKEN,
+    loggly_token: process.env.LOGGLY_TOKEN,
+    enable_log: process.env.ENABLE_LOGGING
+  })
+})
+
 // axiosRetry(axios, {
 //   retries: 3,
 //   retryCondition: (e) => {
