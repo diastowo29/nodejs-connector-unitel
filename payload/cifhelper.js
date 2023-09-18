@@ -1,6 +1,7 @@
 var mime = require('mime-types');
 const axios = require('axios');
-const LOGGLY_TOKEN = process.env.LOGGLY_TOKEN || '25cbd41e-e0a1-4289-babf-762a2e6967b6';
+let vars = require('../config/vars')
+const LOGGLY_TOKEN = vars.LOGGLY_TOKEN;
 var winston = require('winston');
 var { Loggly } = require('winston-loggly-bulk');
 let clientName = 'UNITEL'
@@ -13,9 +14,6 @@ winston.add(new Loggly({
 }));
 
 const cifBulkPayload = async function (msg, brand_id, user_ticket_id, customer) {
-    // const replybackPayload = 
-    // return replybackPayload;
-
     var msgObj = {};
     let username = msg.author.username || msg.author.first_name;
     let ticket_external_id = `unitel-ticket-${msg.author.id}-${msg.id}-${Date.now()}`;

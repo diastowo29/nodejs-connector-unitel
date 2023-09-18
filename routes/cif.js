@@ -5,9 +5,10 @@ const axios = require('axios');
 var request = require('request');
 const { body, header, validationResult } = require('express-validator');
 let workQueue = require('../config/redis.config');
-const LOGGLY_TOKEN = process.env.LOGGLY_TOKEN || '25cbd41e-e0a1-4289-babf-762a2e6967b6';
-let enableLogging = process.env.ENABLE_LOGGING || false;
-const ZD_HOST = process.env.ZD_HOST || 'https://unitelgroup.zendesk.com'
+let vars = require('../config/vars')
+const LOGGLY_TOKEN = vars.LOGGLY_TOKEN;
+let enableLogging = vars.ENABLE_LOG;
+const ZD_HOST = vars.ZD_HOST;
 
 var winston = require('winston');
 var { Loggly } = require('winston-loggly-bulk');
@@ -52,12 +53,12 @@ workQueue.on('global:failed', function (job, error) {
 
 router.get('/check', function(req, res, next) {
   res.status(200).send({
-    host: process.env.ZD_HOST == undefined ? 'null': process.env.ZD_HOST,
-    ticket_fields_id: process.env.USER_TICKET_ID,
-    ext_chat_host: process.env.EXT_CHAT_HOST,
-    ext_chat_token: process.env.EXT_CHAT_TOKEN,
-    loggly_token: process.env.LOGGLY_TOKEN,
-    enable_log: process.env.ENABLE_LOGGING
+    host: vars.ZD_HOST,
+    ticket_fields_id: vars.TFIELDS_ID,
+    ext_chat_host: vars.EXT_HOST,
+    ext_chat_token: vars.EXT_TOKEN,
+    loggly_token: vars.LOGGLY_TOKEN,
+    enable_log: vars.ENABLE_LOG
   })
 })
 
