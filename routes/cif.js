@@ -31,8 +31,15 @@ workQueue.on('global:failed', function (job, error) {
     if (!dev) {
       try {
         if (thisJob.data.type != 'channelback') {
-          let userId = thisJob.data.body.message.from.id;
-          let userName = thisJob.data.body.message.username;
+          let userId = '';
+          let userName = '';
+          if (thisJob.data.type == 'bulk') {
+            userId = thisJob.data.body.from.id;
+            userName = thisJob.data.body.username;
+          } else {
+            userId = thisJob.data.body.message.from.id;
+            userName = thisJob.data.body.message.from.username;
+          }
           let logId = `cif-unitel-${userId}`
           goLogging(logId, 'error', `PUSH-${thisJob.data.type}`, userId, { job:thisJob.id, body: thisJob.data.body, error: thisJob.failedReason}, userName, thisJob.data.auth);
         } else {
