@@ -12,7 +12,7 @@ const ZD_HOST = vars.ZD_HOST;
 
 var winston = require('winston');
 var { Loggly } = require('winston-loggly-bulk');
-let clientName = 'UNITEL-PROD';
+let clientName = 'UNITEL-DEV';
 
 const ZD_CB_ERR_API = ZD_HOST + '/api/v2/any_channel/channelback/report_error';
 
@@ -153,7 +153,7 @@ router.post('/channelback', function(req, res, next) {
     let userid = recipient.split('::')[2];
     let msgId = `unitel-ticket-${userid}-channelback-${Date.now()}`;
 
-    workQueue.add({body: req.body, type: 'channelback', msgId: msgId});
+    workQueue.add({body: req.body, type: 'channelback', msgId: msgId}, { removeOnComplete : { age: 60 }});
     res.status(200).send({
       external_id: msgId
     });
@@ -192,7 +192,7 @@ async function(req, res, next) {
   }
 
   try {
-    let job = await workQueue.add({body: req.body, auth: req.headers['authorization'], type: 'bulk'});
+    let job = await workQueue.add({body: req.body, auth: req.headers['authorization'], type: 'bulk'}, { removeOnComplete : { age: 60 }});
     res.status(200).send({status: 'OK', job: { id: job.id }});
   } catch (e) {
     goLogging(`cif-unitel-${userId}`, 'error', 'CRASH-PUSH-MANY', userId, e, req.body.from.username, `${req.body.instance_id}/${authToken}`);
@@ -217,7 +217,7 @@ async function(req, res, next) {
   }
 
   try {
-    let job = await workQueue.add({body: req.body, auth: req.headers['authorization'], type: 'single'});
+    let job = await workQueue.add({body: req.body, auth: req.headers['authorization'], type: 'single'}, { removeOnComplete : { age: 60 }});
     res.status(200).send({status: 'OK', job: { id: job.id }});
   } catch (e) {
     goLogging(`cif-unitel-${userid}`, 'error', 'CRASH-PUSH', userid, e, req.body.message.from.username, `${req.body.instance_id}/${authToken}`);
