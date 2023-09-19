@@ -183,6 +183,7 @@ router.post('/push_many', body('brand_id').exists(),
   header('authorization').exists(),
 async function(req, res, next) {
   let authToken = req.headers['authorization'];
+  let userId = req.body.from.id;
   
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -194,7 +195,7 @@ async function(req, res, next) {
     let job = await workQueue.add({body: req.body, auth: req.headers['authorization'], type: 'bulk'});
     res.status(200).send({status: 'OK', job: { id: job.id }});
   } catch (e) {
-    goLogging(`cif-unitel-${userid}`, 'error', 'CRASH-PUSH-MANY', userid, e, req.body.message.from.username, `${req.body.instance_id}/${authToken}`);
+    goLogging(`cif-unitel-${userId}`, 'error', 'CRASH-PUSH-MANY', userId, e, req.body.from.username, `${req.body.instance_id}/${authToken}`);
     res.status(500).send({error: e});
   }
 })
