@@ -25,6 +25,15 @@ winston.add(new Loggly({
   json: true
 }));
 
+let jobOpts = {
+  removeOnComplete : { 
+    age: 60 
+  }, 
+  removeOnFail: { 
+    age: 86400 
+  }
+}
+
 workQueue.on('global:failed', function (job, error) {
   workQueue.getJob(job).then(function(thisJob) {
     console.log('FAILED:', job)
@@ -153,7 +162,7 @@ router.post('/channelback', function(req, res, next) {
     let userid = recipient.split('::')[2];
     let msgId = `unitel-ticket-${userid}-channelback-${Date.now()}`;
 
-    workQueue.add({body: req.body, type: 'channelback', msgId: msgId}, { removeOnComplete : { age: 60 }});
+    workQueue.add({body: req.body, type: 'channelback', msgId: msgId}, jobOpts);
     res.status(200).send({
       external_id: msgId
     });
@@ -192,7 +201,7 @@ async function(req, res, next) {
   }
 
   try {
-    let job = await workQueue.add({body: req.body, auth: req.headers['authorization'], type: 'bulk'}, { removeOnComplete : { age: 60 }});
+    let job = await workQueue.add({body: req.body, auth: req.headers['authorization'], type: 'bulk'}, jobOpts);
     res.status(200).send({status: 'OK', job: { id: job.id }});
   } catch (e) {
     goLogging(`cif-unitel-${userId}`, 'error', 'CRASH-PUSH-MANY', userId, e, req.body.from.username, `${req.body.instance_id}/${authToken}`);
@@ -217,7 +226,7 @@ async function(req, res, next) {
   }
 
   try {
-    let job = await workQueue.add({body: req.body, auth: req.headers['authorization'], type: 'single'}, { removeOnComplete : { age: 60 }});
+    let job = await workQueue.add({body: req.body, auth: req.headers['authorization'], type: 'single'}, jobOpts);
     res.status(200).send({status: 'OK', job: { id: job.id }});
   } catch (e) {
     goLogging(`cif-unitel-${userid}`, 'error', 'CRASH-PUSH', userid, e, req.body.message.from.username, `${req.body.instance_id}/${authToken}`);
