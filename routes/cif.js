@@ -26,9 +26,7 @@ winston.add(new Loggly({
 }));
 
 let jobOpts = {
-  removeOnComplete : { 
-    age: 60 
-  }, 
+  removeOnComplete : true,
   removeOnFail: { 
     age: 86400 
   }
