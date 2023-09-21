@@ -103,6 +103,12 @@ router.get('/manifest', function(req, res, next) {
   });
 });
 
+router.get('/jobs', function(req, res, next) {
+  workQueue.getJobs().then(function(thisJob) {
+    res.status(200).send(thisJob == null ? {} : thisJob)
+  })
+})
+
 router.get('/job', function(req, res, next) {
   workQueue.getJob(req.query.job_id).then(function(thisJob) {
     res.status(200).send(thisJob == null ? {} : thisJob)
