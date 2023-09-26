@@ -59,7 +59,7 @@ workQueue.on('global:failed', function (job, error) {
           axios(service.reportChannelbackError(ZD_CB_ERR_API, metadata.zendesk_access_token, metadata.instance_push_id, msgId, thisJob.failedReason));
         }
       } catch (e) {
-        goLogging('0/0', 'error', `CRASH-QUEUE-EVENT`, thisJob.id, thisJob.data.body, e, thisJob.data.auth);
+        goLogging('0/0', 'error', `CRASH-QUEUE-EVENT`, thisJob.id, { body: thisJob.data.body, err: e }, 'NO_NAME', 'NO_AUTH');
       }
     }
   })
