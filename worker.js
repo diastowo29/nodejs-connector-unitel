@@ -16,6 +16,7 @@ let maxJobsPerWorker = 20;
 let workQueue = require('./config/redis.config')
 
 function start() {
+    console.log('start');
     workQueue.process(maxJobsPerWorker, async (job, done) => {
         if (job.data.type == 'single') {
             processMessage(job.data, done);
