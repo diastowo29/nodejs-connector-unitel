@@ -224,13 +224,16 @@ async function(req, res, next) {
   let authToken = req.headers['authorization'];
   let userid = req.body.message.from.id;
   const errors = validationResult(req);
+  console.log(userid);
   if (!errors.isEmpty()) {
     goLogging('0/0', 'error', 'PUSH', 'cif', req.body, 'cif', errors.array());
     return res.status(400).json({ errors: errors.array() });
   }
 
   try {
+    console.log('PUSH JOB');
     let job = await workQueue.add({body: req.body, auth: req.headers['authorization'], type: 'single'}, jobOpts);
+    console.log('JOB PUSHED')
     res.status(200).send({status: 'OK', job: { id: job.id }});
   } catch (e) {
     goLogging(`cif-unitel-${userid}`, 'error', 'CRASH-PUSH', userid, e, req.body.message.from.username, `${req.body.instance_id}/${authToken}`);
