@@ -182,12 +182,16 @@ router.get('/clickthrough', function(req, res, next) {
 
 router.post('/file/:filename\.:ext?', function(req, res, next) {
   let fileUrl = req.query.source;
-  try {
-    request.get(fileUrl).pipe(res);
-  } catch (err) {
+  request.get(fileUrl).on('error', function(err) {
+    console.log('error on pipe')
     console.log(err);
-    res.status(200).send({});
-  }
+    res.end();
+  }).pipe(res);
+  // try {
+  // } catch (err) {
+  //   console.log(err);
+  //   res.status(200).send({});
+  // }
 
 })
 
