@@ -1,5 +1,6 @@
 module.exports = {
     TFIELDS_ID: process.env.USER_TICKET_ID || '6681549599887',
+    TRANSITION_FIELDS_ID: process.env.TRANSITION_TFIELDS_ID || '11633549304335',
     ZD_HOST: process.env.ZD_HOST || 'https://unitelgroup1694589998.zendesk.com',
     EXT_HOST: process.env.EXT_CHAT_HOST || 'xxx',
     EXT_TOKEN: process.env.EXT_CHAT_TOKEN || 'xxx',

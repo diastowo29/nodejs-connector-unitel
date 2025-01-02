@@ -5,6 +5,8 @@ const unitel = require('./payload/unitel');
 let vars = require('./config/vars')
 const cifhelper = require('./payload/cifhelper')
 const USER_TICKET_ID = vars.TFIELDS_ID;
+const TRANSITION_FIELDS_ID = vars.TRANSITION_FIELDS_ID;
+
 const ZD_HOST = vars.ZD_HOST;
 const ZD_PUSH_API = ZD_HOST + '/api/v2/any_channel/push';
 const EXT_CHAT_HOST = vars.EXT_HOST;
@@ -59,8 +61,9 @@ async function processMessageBulk (jobData, done) {
         let authToken = jobData.auth;
         let brand_id = jobData.body.brand_id;
         let customer = jobData.body.from;
+        let transition_id = jobData.body.transition_id;
         await msgs.slice().reverse().forEach(async msg => {
-            var msgObj = await cifhelper.cifBulkPayload(msg, brand_id, USER_TICKET_ID, customer);
+            var msgObj = await cifhelper.cifBulkPayload(msg, brand_id, USER_TICKET_ID, customer, TRANSITION_FIELDS_ID, transition_id);
             external_resource_array.push(msgObj);
         });
         let pushPayload = service.pushConversationPayload(ZD_PUSH_API, authToken, instance_push_id, external_resource_array);
