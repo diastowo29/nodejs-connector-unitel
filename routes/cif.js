@@ -12,7 +12,7 @@ const ZD_HOST = vars.ZD_HOST;
 
 var winston = require('winston');
 var { Loggly } = require('winston-loggly-bulk');
-let clientName = 'UNITEL-PROD';
+let clientName = 'UNITEL-DEV';
 
 const ZD_CB_ERR_API = ZD_HOST + '/api/v2/any_channel/channelback/report_error';
 
