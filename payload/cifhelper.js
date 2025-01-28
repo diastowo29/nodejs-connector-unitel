@@ -81,7 +81,7 @@ const cifBulkPayload = async function (msg, brand_id, user_ticket_id, customer, 
       }
       msgObj['message'] = fileMessage;
       if (ext) {
-        msgObj['html_message'] = fileMessage + `<a href="${msg_content}">${msg_content}</a>`;
+        msgObj['html_message'] = fileMessage + `: <a href="${decodeURIComponent(msg_content)}">${decodeURIComponent(msg_content)}</a>`;
         msgObj['file_urls'] = [`/api/v1/cif/file/users-file.${ext}?source=${msg_content}`]
       }
     }
@@ -151,6 +151,7 @@ const cifPayload = async function (msg, brand_id, user_ticket_id) {
     }
     msgObj['message'] = fileMessage;
     if (ext) {
+      msgObj['html_message'] = fileMessage + `: <a href="${decodeURIComponent(msg_content)}">${decodeURIComponent(msg_content)}</a>`;
       msgObj['file_urls'] = [`/api/v1/cif/file/users-file.${ext}?source=${msg_content}`]
     }
   }
