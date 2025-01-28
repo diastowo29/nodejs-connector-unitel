@@ -44,6 +44,7 @@ async function processMessage (jobData, done) {
             console.log('done sending message')
             done(null, {response: response.data});
         }, (error) => {
+            console.log(error);
             // throw new Error(error);
             done(new Error(error));
         });
@@ -72,6 +73,7 @@ async function processMessageBulk (jobData, done) {
             console.log('done sending message')
             done(null, {response: response.data});
         }, (error) => {
+            console.log(error);
             // throw new Error(error);
             done(new Error(error));
         })
